@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TOEIC Trainer</title>
+<style>
+/* VOICE: coach d'entraînement, net et encourageant
+   IDEA: un carnet de bord d'examen : score, courbe, priorités
+   PICTURE: la courbe de progression vers 850 et les cartes de priorités
+   COLOUR and TYPE: blanc, encre, bleu écoute, orange lecture ; police système (hors ligne)
+   LAYOUT: barre de navigation, héros score + courbe, sections empilées */
+:root{color-scheme:light dark;--bg:light-dark(#f7f8fb,#0e1117);--card:light-dark(#fff,#161a22);--ink:light-dark(#14161c,#eef0f5);--mut:light-dark(#5d6372,#a3a9b8);--line:light-dark(#e3e6ee,#272c38);--blue:light-dark(#2f5bd3,#7d9cff);--or:light-dark(#d9662f,#ff9a66);--ok:light-dark(#1f8a5b,#4fd197);--bad:light-dark(#c8372d,#ff7b70);--soft:light-dark(#eef2fd,#1b2233);--warn:light-dark(#fff4e0,#2c2414)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:clip}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.nav{max-width:1180px;margin:0 auto;display:flex;align-items:center;gap:4px;padding:8px max(4vw,12px);overflow-x:auto}
+.nav .logo{font-weight:800;margin-right:14px;white-space:nowrap}.nav .logo i{font-style:normal;color:var(--blue)}
+.nav a,.nav .logo{flex:none}.nav a{padding:10px 12px;border-radius:10px;color:var(--mut);text-decoration:none;white-space:nowrap;cursor:pointer;min-height:44px;display:flex;align-items:center}
+.nav a.on{background:var(--soft);color:var(--ink);font-weight:600}
+main{max-width:1180px;margin:0 auto;padding:clamp(16px,3vw,36px) max(4vw,12px) 80px}
+h2{font-size:26px;line-height:1.15;margin:28px 0 6px}h3{font-size:18px;margin:0 0 6px}
+.muted{color:var(--mut)}.small{font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:12px 0}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:24px;align-items:center}
+.hero>div:first-child{padding:8px 0}
+.eyebrow{margin:0;font-weight:600;color:var(--blue)}
+.score{font-size:clamp(52px,9vw,84px);font-weight:800;line-height:1}.score small{font-size:22px;color:var(--mut);font-weight:500}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden;flex:1}.bar i{display:block;height:100%;background:var(--blue);border-radius:99px;transition:width .3s}
+.bar.big{height:14px;margin:14px 0}.bar.big i{background:linear-gradient(90deg,var(--blue),var(--or))}.bar.rea i{background:var(--or)}
+.btn{font:inherit;font-weight:600;border:0;background:var(--blue);color:#fff;border-radius:12px;padding:11px 18px;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-align:left}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}.btn.sm{padding:8px 12px;min-height:38px;font-size:14px}.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.45;cursor:default}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.cta,.exrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.chart{width:100%;height:auto;display:block}.chart .grid{stroke:var(--line)}.chart .goal{stroke:var(--or);stroke-width:2;stroke-dasharray:6 5}.chart .b2{stroke:var(--mut);stroke-dasharray:2 4}
+.chart .ax{fill:var(--mut);font-size:12px}.chart .gl{fill:var(--or);font-size:12px;font-weight:700}.chart .bl{fill:var(--mut);font-size:12px}
+.chart .line{fill:none;stroke:var(--blue);stroke-width:3}.chart .dot{fill:var(--blue);stroke:var(--card);stroke-width:3}.chart .val{fill:var(--ink);font-size:13px;font-weight:700}
+.tests{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr));gap:12px;margin-top:12px}
+.tcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:4px}
+.tcard.done{border-color:var(--blue)}.tsc{font-size:30px;font-weight:800;margin:4px 0}
+.rec{display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:12px 0}
+.rk{width:40px;height:40px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:800;font-size:18px}
+.rh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.rec p{margin:6px 0}.rec ul,.card ul{margin:6px 0;padding-left:20px}
+.pill{font-size:13px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--soft);white-space:nowrap}
+.pill.quick{background:light-dark(#dff5ea,#123a28);color:var(--ok)}.pill.mid{background:var(--soft);color:var(--blue)}.pill.slow{background:var(--warn);color:var(--or)}
+.pill.lis{color:var(--blue)}.pill.rea{background:var(--warn);color:var(--or)}.pill.tag{font-size:12px;padding:2px 8px}
+.exgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin-top:10px}
+.exb{font:inherit;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:8px;min-height:58px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.exb b{font-size:18px}.exb small{font-size:11px;color:var(--mut);line-height:1.2}
+.exb.g{border-color:var(--ok);background:light-dark(#e9f8f0,#10291d)}.exb.m{border-color:var(--blue)}.exb.b{border-color:var(--or);background:var(--warn)}
+.runner .rtop{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}.sp{flex:1}
+.cd{font-weight:700;font-variant-numeric:tabular-nums;display:flex;gap:8px;align-items:center;white-space:nowrap}.cd.late{color:var(--bad)}
+.runner>.bar{margin-bottom:16px}
+.grp{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.card .grp{border:0;padding:0}
+.scene{max-width:520px;margin:0 auto 14px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}.scene svg{display:block;width:100%;height:auto}
+.q{padding:10px 0;border-top:1px solid var(--line)}.q:first-child{border-top:0}
+.qt{font-weight:600;margin-bottom:8px;font-size:17px}.num{display:inline-block;min-width:34px;color:var(--mut);font-weight:700}
+.gap{display:inline-block;width:80px;border-bottom:2px solid var(--ink);margin:0 3px;vertical-align:-2px}
+.opts{display:grid;gap:8px}
+.g1 .opts,.g2 .opts{grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr))}
+.opt{font:inherit;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:10px 12px;min-height:46px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.opt b{flex:none;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--mut);display:grid;place-items:center;font-size:13px}
+.opt.sel{border-color:var(--blue);background:var(--soft)}.opt.sel b{background:var(--blue);border-color:var(--blue);color:#fff}
+.opt.ok{border-color:var(--ok);background:light-dark(#e9f8f0,#10291d)}.opt.ok b{background:var(--ok);border-color:var(--ok);color:#fff}
+.opt.bad{border-color:var(--bad);background:light-dark(#fdecea,#341614)}.opt.bad b{background:var(--bad);border-color:var(--bad);color:#fff}
+.opt:disabled{cursor:default;opacity:1}
+.ex{font-size:15px;margin:8px 0 0;color:var(--mut)}
+.tr2{font-size:18px;font-weight:600;background:var(--soft);padding:10px 14px;border-radius:10px}
+.trans{background:var(--soft);border-radius:12px;padding:12px 16px;margin-bottom:14px;font-size:15px}.trans p{margin:4px 0}
+.doc{background:light-dark(#fffdf8,#1a1d24);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:14px;font-size:15.5px}
+.doc .dt{font-size:12px;font-weight:700;color:var(--or);margin-bottom:6px}
+.doc h4{margin:0 0 6px;font-size:16px}.doc p{margin:6px 0}.doc table{border-collapse:collapse;width:100%}.doc td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top}.doc td.n,.tbl .n{text-align:right;white-space:nowrap}
+.mh{border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:8px;font-size:14px}
+.chat p{background:var(--soft);border-radius:10px;padding:6px 10px}
+.blank{display:inline-block;min-width:70px;border-bottom:2px solid var(--or);font-weight:700;color:var(--or);text-align:center}
+@media(min-width:900px){.g7s,.g7m{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}.g7s .qs,.g7m .qs{position:sticky;top:76px}}
+.rnav{display:flex;justify-content:space-between;gap:10px;margin:16px 0;flex-wrap:wrap}
+.pal{margin-top:8px}.pal summary{cursor:pointer;font-weight:600;min-height:32px}
+.palg{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px;margin-top:10px}
+.pb{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;min-height:36px;cursor:pointer}.pb.a{background:var(--soft);border-color:var(--blue)}.pb.c{outline:2px solid var(--or)}
+.warn{background:var(--warn);border-radius:12px;padding:12px 14px;margin:10px 0}
+.pr{display:grid;grid-template-columns:minmax(0,12em) minmax(0,1fr) 4.5em 3em;gap:10px;align-items:center;padding:6px 0;font-size:14px}.pr b{text-align:right}.pr small{text-align:right}
+.up{color:var(--ok)}.down{color:var(--bad)}
+.tbl{width:100%;border-collapse:collapse;font-size:15px}.tbl td,.tbl th{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+.tipbox{background:var(--soft);border:0;font-size:15px}
+.filters{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:12px 0}
+select{font:inherit;font-size:16px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-height:44px}
+.row{display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap}input[type=checkbox]{width:20px;height:20px}input[type=range]{width:200px}
+.intro{max-width:760px}
+@media(max-width:800px){.hero{grid-template-columns:1fr}}
+@media(max-width:600px){.pr{grid-template-columns:minmax(0,1fr) 4em 3em}.pr .bar{grid-column:1/-1;grid-row:2}.rec{grid-template-columns:1fr}.rk{width:34px;height:34px}}
+@media(prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TOEIC">
+<meta name="theme-color" content="#2f5bd3">
+</head>
+<body>
+<header><nav class="nav"><span class="logo">TOEIC <i>Trainer</i></span><a data-act="home">Accueil</a><a data-act="exList">Exercices</a><a data-act="meth">Méthodes</a><a data-act="settings">Réglages</a></nav></header>
+<main id="app"></main>
+<script>
+/* ===== CORE : hasard reproductible, banques, outils ===== */
+function RNG(seed){
+  let s=seed>>>0;
+  const f=()=>{s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  const r={f,
+    int:(a,b)=>a+Math.floor(f()*(b-a+1)),
+    pick:a=>a[Math.floor(f()*a.length)],
+    shuffle:a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(f()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a},
+    sample:(a,n)=>r.shuffle(a).slice(0,n),
+    decks:{},
+    draw:(key,arr)=>{let d=r.decks[key];if(!d||!d.length)d=r.decks[key]=r.shuffle(arr.map((_,i)=>i));return arr[d.pop()]}
+  };
+  return r;
+}
+const B={
+  mf:["James","Daniel","Kenji","Carlos","Michael","Omar","Thomas","Ravi","Peter","Lucas","David","Samuel","Andrew","Ben"],
+  ff:["Linda","Priya","Emma","Sofia","Hannah","Grace","Maria","Yuki","Rachel","Laura","Nadia","Claire","Julia","Anna"],
+  ln:["Patel","Nguyen","Garcia","Thompson","Kim","Rossi","Walker","Chen","Okafor","Martin","Fischer","Silva","Brennan","Larsen","Moreau","Tanaka","Hughes","Lopez"],
+  co:["Brightline Logistics","Harbor Tech","Norvale Foods","Crestwood Hotels","Pinewood Bank","Summit Office Supplies","Bluewave Media","Greenfield Motors","Atlas Engineering","Maple Consulting","Silverline Airlines","Orchid Pharmaceuticals","Redstone Publishing","Lakeside Electronics"],
+  city:["Chicago","Toronto","Sydney","London","Dublin","Vancouver","Boston","Melbourne","Seattle","Manchester","Denver","Auckland","Singapore","Edinburgh"],
+  day:["Monday","Tuesday","Wednesday","Thursday","Friday"],
+  month:["January","February","March","April","May","June","July","August","September","October","November","December"],
+  dept:["accounting","marketing","sales","human resources","customer service","shipping","research","legal"],
+  prod:["laptops","office chairs","printer cartridges","kitchen appliances","running shoes","smartphones","desk lamps","coffee machines","tablets","backpacks"],
+  times:["8:30 A.M.","9:00 A.M.","9:30 A.M.","10:00 A.M.","10:30 A.M.","11:00 A.M.","11:30 A.M.","1:00 P.M.","1:30 P.M.","2:00 P.M.","2:30 P.M.","3:00 P.M.","3:30 P.M.","4:00 P.M.","4:30 P.M."],
+  street:["Maple","Oak","Harbor","River","King","Elm","Park","Market","Bridge","Station"],
+  rest:["Bella Cucina","The Blue Fern","Golden Lantern","Riverside Grill","Casa Verde","The Copper Pot"],
+  hotel:["Grand Plaza Hotel","Lakeview Inn","Riverside Suites","Hotel Meridian","Parkside Hotel"]
+};
+function ctx(r){
+  const m=r.sample(B.mf,3),f=r.sample(B.ff,3),l=r.sample(B.ln,4),co=r.sample(B.co,3),ci=r.sample(B.city,3);
+  const di=r.int(0,2),mi=r.int(0,10),ti=r.int(0,B.times.length-4);
+  return {M:m[0],M2:m[1],M3:m[2],F:f[0],F2:f[1],F3:f[2],L:l[0],L2:l[1],L3:l[2],L4:l[3],CO:co[0],CO2:co[1],CO3:co[2],
+    CITY:ci[0],CITY2:ci[1],CITY3:ci[2],D0:B.day[di],D1:B.day[di+1],D2:B.day[di+2],DAY:r.pick(B.day),
+    MONTH:B.month[mi],MONTH2:B.month[mi+1],DEPT:r.pick(B.dept),PROD:r.pick(B.prod),
+    T0:B.times[ti],T1:B.times[ti+1],T2:B.times[ti+2],T3:B.times[ti+3],
+    STREET:r.pick(B.street),REST:r.pick(B.rest),HOTEL:r.pick(B.hotel),NUM:r.int(10000,99999)};
+}
+const fill=(s,c)=>s.replace(/\{(\w+)\}/g,(_,k)=>c[k]!==undefined?c[k]:k);
+/* question à choix multiples : bonne réponse + distracteurs -> options mélangées */
+function mc(r,c,ds,n=4){
+  const pool=[...new Set(ds.filter(x=>x!==c))];
+  const o=r.shuffle([c,...r.sample(pool,n-1)]);
+  return {o,a:o.indexOf(c)};
+}
+function mkQ(r,q,c,ds,tag,ex,n){return Object.assign({q,tag,ex},mc(r,c,ds,n))}
+const otherTimes=(c,t)=>B.times.filter(x=>x!==t);
+const LET="ABCD";
+
+/* ===== PARTIE 1 : photographies (scènes dessinées en SVG) ===== */
+const SV={
+  wrap:(bg,inner)=>`<svg viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg" role="img">${bg}${inner}</svg>`,
+  room:(wall,floor)=>`<rect width="400" height="260" fill="${wall}"/><rect y="200" width="400" height="60" fill="${floor}"/><rect y="198" width="400" height="4" fill="#00000018"/>`,
+  outside:(sky,ground)=>`<rect width="400" height="260" fill="${sky}"/><rect y="190" width="400" height="70" fill="${ground}"/>`,
+  hair(x,hy,fem,col){return fem?`<path d="M${x-15} ${hy+14}Q${x-17} ${hy-16} ${x} ${hy-15}Q${x+17} ${hy-16} ${x+15} ${hy+14}L${x+11} ${hy+2}Q${x} ${hy-6} ${x-11} ${hy+2}Z" fill="${col}"/>`:`<path d="M${x-13} ${hy-1}Q${x-13} ${hy-15} ${x} ${hy-15}Q${x+13} ${hy-15} ${x+13} ${hy-1}Q${x} ${hy-9} ${x-13} ${hy-1}Z" fill="${col}"/>`},
+  arm(sx,sy,ex,ey,col,sk){return `<path d="M${sx} ${sy}L${ex} ${ey}" stroke="${col}" stroke-width="8" stroke-linecap="round"/><circle cx="${ex}" cy="${ey}" r="4.5" fill="${sk}"/>`},
+  /* personne debout, pieds en y ; arms = [[dx,dy],[dx,dy]] fin des bras gauche/droite relative aux épaules */
+  stand(x,y,o={}){
+    const c=o.c||"#3b6fd4",sk=o.sk||"#e3b58f",h=o.h||"#3a2a1f",pt=o.pt||"#2f3542",hy=y-118;
+    const a=o.arms||[[-6,40],[6,40]];
+    return `<g><rect x="${x-13}" y="${y-60}" width="11" height="58" rx="4" fill="${pt}"/><rect x="${x+2}" y="${y-60}" width="11" height="58" rx="4" fill="${pt}"/>
+    <rect x="${x-15}" y="${y-6}" width="14" height="6" rx="3" fill="#222"/><rect x="${x+1}" y="${y-6}" width="14" height="6" rx="3" fill="#222"/>
+    <rect x="${x-16}" y="${y-103}" width="32" height="50" rx="10" fill="${c}"/>
+    ${SV.arm(x-12,y-96,x-12+a[0][0],y-96+a[0][1],c,sk)}${SV.arm(x+12,y-96,x+12+a[1][0],y-96+a[1][1],c,sk)}
+    <rect x="${x-4}" y="${y-110}" width="8" height="8" fill="${sk}"/><circle cx="${x}" cy="${hy}" r="13" fill="${sk}"/>${SV.hair(x,hy,o.f,h)}</g>`},
+  /* personne assise : hanches en (x,y), regarde vers dir (1 droite / -1 gauche) */
+  sit(x,y,o={}){
+    const c=o.c||"#3b6fd4",sk=o.sk||"#e3b58f",h=o.h||"#3a2a1f",pt=o.pt||"#2f3542",d=o.dir||1,hy=y-64;
+    const a=o.arms||[[22*d,22],[26*d,20]];
+    return `<g><path d="M${x} ${y-4}L${x+30*d} ${y-4}" stroke="${pt}" stroke-width="12" stroke-linecap="round"/>
+    <path d="M${x+30*d} ${y-4}L${x+30*d} ${y+42}" stroke="${pt}" stroke-width="11" stroke-linecap="round"/><rect x="${x+30*d-(d>0?4:12)}" y="${y+40}" width="16" height="6" rx="3" fill="#222"/>
+    <rect x="${x-16}" y="${y-50}" width="32" height="50" rx="10" fill="${c}"/>
+    ${SV.arm(x-10*d,y-44,x-10*d+a[0][0],y-44+a[0][1],c,sk)}${SV.arm(x+10*d,y-44,x+10*d+a[1][0],y-44+a[1][1],c,sk)}
+    <rect x="${x-4}" y="${y-56}" width="8" height="8" fill="${sk}"/><circle cx="${x}" cy="${hy}" r="13" fill="${sk}"/>${SV.hair(x,hy,o.f,h)}</g>`},
+  chair:(x,y,col)=>`<rect x="${x-18}" y="${y}" width="40" height="7" rx="3" fill="${col}"/><rect x="${x-18}" y="${y-48}" width="7" height="55" rx="3" fill="${col}"/><rect x="${x-14}" y="${y+6}" width="5" height="34" fill="${col}"/><rect x="${x+14}" y="${y+6}" width="5" height="34" fill="${col}"/>`,
+  table:(x,y,w,col)=>`<rect x="${x}" y="${y}" width="${w}" height="9" rx="3" fill="${col}"/><rect x="${x+8}" y="${y+9}" width="7" height="${200-y-9+12}" fill="${col}"/><rect x="${x+w-15}" y="${y+9}" width="7" height="${200-y-9+12}" fill="${col}"/>`,
+  box:(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#c99a5b"/><rect x="${x}" y="${y}" width="${w}" height="${h*0.22}" fill="#b5864a"/><rect x="${x+w/2-4}" y="${y}" width="8" height="${h}" fill="#e6c48a"/>`,
+  plant:(x,y,s=1)=>`<path d="M${x-14*s} ${y-30*s}h${28*s}l${-4*s} ${30*s}h${-20*s}z" fill="#b5553a"/><ellipse cx="${x-10*s}" cy="${y-44*s}" rx="${9*s}" ry="${17*s}" fill="#3f8f4f" transform="rotate(-25 ${x-10*s} ${y-44*s})"/><ellipse cx="${x+10*s}" cy="${y-44*s}" rx="${9*s}" ry="${17*s}" fill="#4fa35d" transform="rotate(25 ${x+10*s} ${y-44*s})"/><ellipse cx="${x}" cy="${y-52*s}" rx="${8*s}" ry="${18*s}" fill="#5bb46a"/>`,
+  car:(x,y,col)=>`<path d="M${x} ${y-14}q0-12 14-14l18-16h52l22 16q16 2 16 14v10h-122z" fill="${col}"/><path d="M${x+36} ${y-42}h20v14h-30z M${x+60} ${y-42}h22l14 14h-36z" fill="#cfe3f3"/><circle cx="${x+26}" cy="${y-3}" r="11" fill="#222"/><circle cx="${x+96}" cy="${y-3}" r="11" fill="#222"/><circle cx="${x+26}" cy="${y-3}" r="4" fill="#999"/><circle cx="${x+96}" cy="${y-3}" r="4" fill="#999"/>`,
+  bike:(x,y,col)=>`<circle cx="${x}" cy="${y-16}" r="16" fill="none" stroke="#333" stroke-width="3"/><circle cx="${x+50}" cy="${y-16}" r="16" fill="none" stroke="#333" stroke-width="3"/><path d="M${x} ${y-16}l18-26h24l8 26M${x+18} ${y-42}l8 26 16-26M${x+14} ${y-48}h10M${x+40} ${y-46}l4-6h8" stroke="${col}" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+  laptop:(x,y)=>`<path d="M${x} ${y}h44l-6-30h-32z" fill="#555"/><path d="M${x+10} ${y-27}h24l4 22h-32z" fill="#9fc6e8"/><rect x="${x-6}" y="${y}" width="56" height="4" rx="2" fill="#333"/>`,
+  window:(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#bfe0f5" stroke="#fff" stroke-width="6"/><path d="M${x+w/2} ${y}v${h}M${x} ${y+h/2}h${w}" stroke="#fff" stroke-width="4"/>`
+};
+const SKIN=["#e3b58f","#c68a5e","#8d5a3b","#f0c9a6"],HAIR=["#3a2a1f","#1c1c1c","#7a4b2a","#c9a15a"],SHIRT=["#3b6fd4","#d9534f","#2e9e6a","#8e5bd1","#e08a2c","#27798f"];
+const P1S=[
+ {id:"typing",draw:(r)=>SV.room("#e9eef4","#c9b49a")+SV.window(270,40,90,70)+SV.chair(150,165,"#444")+SV.sit(150,165,{f:1,c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[30,14],[36,12]]})+SV.table(160,150,170,"#8a6a4a")+SV.laptop(200,150)+`<rect x="280" y="128" width="30" height="22" fill="#fff" stroke="#bbb"/>`,
+  ok:["A woman is typing on a laptop.","A woman is seated at a desk."],
+  no:["A woman is closing a laptop.","A woman is putting on her glasses.","Some files are stacked on the floor.","A woman is opening a window."]},
+ {id:"meeting",draw:(r)=>SV.room("#eef0e8","#a99a86")+`<rect x="120" y="30" width="160" height="90" fill="#fff" stroke="#555" stroke-width="4"/><path d="M140 100l30-30 25 20 35-40 30 25" stroke="#3b6fd4" stroke-width="5" fill="none"/>`+SV.sit(70,175,{c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[24,16],[28,14]]})+SV.sit(330,175,{f:1,dir:-1,c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[-24,16],[-28,14]]})+SV.table(95,160,210,"#6d5a48")+`<rect x="150" y="150" width="40" height="10" fill="#fff"/><rect x="225" y="150" width="35" height="10" fill="#fff"/>`,
+  ok:["Some people are seated around a table.","A chart is being displayed on a screen."],
+  no:["Some people are standing in a line.","Chairs are stacked against the wall.","A man is turning off the screen.","Some people are shaking hands."]},
+ {id:"boxes",draw:(r)=>SV.room("#f1ebe2","#9c8f80")+`<rect x="40" y="40" width="90" height="160" fill="#7d8896"/><rect x="48" y="48" width="74" height="152" fill="#93a0ae"/>`+SV.box(260,150,60,50)+SV.box(300,110,55,40)+SV.stand(190,225,{c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[12,24],[-12,24]]})+SV.box(165,118,50,40),
+  ok:["A man is carrying a box.","A man is holding a cardboard box."],
+  no:["A man is opening a box.","Boxes are being loaded onto a truck.","A man is sitting on a box.","A man is taping a box shut."]},
+ {id:"ladder",draw:(r)=>SV.room("#eaf0f5","#b8a58f")+`<rect x="150" y="0" width="100" height="14" fill="#ddd"/><circle cx="200" cy="22" r="9" fill="#ffe27a"/>`+`<path d="M160 225L185 70M240 225L215 70" stroke="#c8a24a" stroke-width="7"/>${[90,120,150,180,210].map(y=>`<path d="M${160+(225-y)/155*25} ${y}H${240-(225-y)/155*25}" stroke="#c8a24a" stroke-width="5"/>`).join("")}`+SV.stand(200,150,{c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[-4,-40],[4,-44]]}),
+  ok:["A man is standing on a ladder.","A man is reaching toward the ceiling."],
+  no:["A ladder is lying on the floor.","A man is climbing down some stairs.","A man is painting a fence.","A man is sweeping the floor."]},
+ {id:"plants",draw:(r)=>SV.outside("#cfe8f7","#8cc47a")+SV.plant(250,210,1.2)+SV.plant(310,210,1)+SV.plant(360,212,1.1)+SV.stand(150,225,{f:1,c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[30,10],[34,6]]})+`<path d="M190 120h34v26h-34z" fill="#3c8dbc"/><path d="M224 124l30 14" stroke="#3c8dbc" stroke-width="5"/><path d="M256 140l6 14M252 142l2 14M260 138l9 12" stroke="#7cc4f2" stroke-width="2"/>`,
+  ok:["A woman is watering some plants.","Some plants are being watered."],
+  no:["A woman is planting a tree.","Some flowers are being picked.","A woman is filling a bucket.","A woman is mowing the lawn."]},
+ {id:"cars",draw:(r)=>SV.outside("#d6e9f5","#888")+`<rect y="150" width="400" height="40" fill="#bdbdbd"/><rect y="226" width="400" height="34" fill="#777"/>`+`<rect x="20" y="50" width="120" height="100" fill="#c96f4a"/><rect x="250" y="40" width="130" height="110" fill="#8d9aa8"/>`+SV.car(10,224,r.pick(SHIRT))+SV.car(140,224,"#e0e0e0")+SV.car(270,224,r.pick(SHIRT)),
+  ok:["Some cars are parked in a row.","Several vehicles are parked along the street."],
+  no:["Cars are stopped at a traffic light.","A man is washing a car.","The street is crowded with people.","A car is being repaired."]},
+ {id:"shelves",draw:(r)=>SV.room("#f5f0e6","#c2b8a8")+[60,100,140].map(y=>`<rect x="190" y="${y}" width="190" height="6" fill="#8a6a4a"/>${[0,1,2,3,4,5].map(i=>`<rect x="${198+i*30}" y="${y-28}" width="20" height="28" fill="${SHIRT[(i+y/40|0)%6]}"/>`).join("")}`).join("")+`<rect x="186" y="30" width="6" height="170" fill="#8a6a4a"/><rect x="378" y="30" width="6" height="170" fill="#8a6a4a"/>`+SV.stand(130,225,{f:1,c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[52,-26],[6,42]]}),
+  ok:["A woman is reaching for an item on a shelf.","Some products are displayed on shelves."],
+  no:["The shelves are empty.","A woman is paying at the counter.","A woman is pushing a shopping cart.","Some boxes are being unpacked."]},
+ {id:"hands",draw:(r)=>SV.room("#eef2f7","#a8a094")+SV.window(150,30,100,80)+SV.stand(160,225,{c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[-6,40],[28,16]]})+SV.stand(240,225,{f:1,c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[-28,16],[6,40]]})+SV.plant(60,205,1),
+  ok:["Two people are shaking hands.","Two people are greeting each other."],
+  no:["Two people are waving at each other.","Two people are exchanging documents.","A man is putting on a jacket.","Two people are walking out of a room."]},
+ {id:"phone",draw:(r)=>SV.room("#eaeef2","#9e9488")+SV.window(220,30,140,110)+SV.stand(170,225,{c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[-6,40],[4,-14]]})+`<rect x="178" y="94" width="8" height="16" rx="2" fill="#222"/>`,
+  ok:["A man is talking on the phone.","A man is standing near a window."],
+  no:["A man is opening a window.","A man is hanging up a picture.","A phone is ringing on a desk.","A man is cleaning a window."]},
+ {id:"cafe",draw:(r)=>SV.outside("#d9eef8","#d9c7a7")+`<path d="M140 60Q200 20 260 60Z" fill="${r.pick(["#e85d4f","#2e9e6a","#e0a22c"])}"/><rect x="198" y="58" width="4" height="100" fill="#666"/>`+SV.table(150,150,100,"#666")+SV.chair(110,165,"#777")+SV.sit(110,165,{f:1,c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[30,14],[14,-4]]})+`<rect x="128" y="112" width="10" height="12" rx="2" fill="#fff"/><rect x="215" y="140" width="10" height="10" fill="#fff"/>`,
+  ok:["A woman is drinking from a cup.","An umbrella is shading a table."],
+  no:["A woman is pouring some water.","An umbrella is being folded.","Some tables are being set.","A waiter is taking an order."]},
+ {id:"bikes",draw:(r)=>SV.outside("#dff0fb","#a9a9a9")+`<rect x="40" y="40" width="320" height="110" fill="#c2a07a"/>${[0,1,2,3].map(i=>`<rect x="${60+i*80}" y="60" width="40" height="70" fill="#7f6550"/>`).join("")}<path d="M30 196H370" stroke="#555" stroke-width="5"/>`+SV.bike(50,226,r.pick(SHIRT))+SV.bike(150,226,r.pick(SHIRT))+SV.bike(250,226,r.pick(SHIRT)),
+  ok:["Some bicycles have been parked in a rack.","Several bicycles are lined up outside a building."],
+  no:["A man is riding a bicycle.","Some bicycles are being repaired.","A bicycle rack is being installed.","A woman is locking her bicycle."]},
+ {id:"pointing",draw:(r)=>SV.room("#eef1ea","#b0a493")+`<rect x="40" y="35" width="200" height="120" fill="#fff" stroke="#666" stroke-width="5"/>${[0,1,2,3].map(i=>`<rect x="${70+i*42}" y="${130-(i+1)*20}" width="26" height="${(i+1)*20}" fill="${SHIRT[i]}"/>`).join("")}`+SV.stand(300,225,{c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[-58,-12],[6,40]]}),
+  ok:["A man is pointing at a chart.","A man is standing next to a board."],
+  no:["A man is erasing a board.","A man is writing on a notepad.","Some people are leaving the room.","A man is hanging a poster."]},
+ {id:"bench",draw:(r)=>SV.outside("#d4ecf7","#7fbf6e")+`<circle cx="330" cy="80" r="50" fill="#4f9f55"/><rect x="324" y="110" width="12" height="85" fill="#7a5a3a"/>`+`<rect x="100" y="160" width="200" height="10" fill="#9a6b3f"/><rect x="100" y="130" width="200" height="8" fill="#9a6b3f"/><rect x="110" y="170" width="8" height="40" fill="#555"/><rect x="282" y="170" width="8" height="40" fill="#555"/>`+SV.sit(180,162,{c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[24,0],[30,-2]]})+`<rect x="200" y="102" width="34" height="26" fill="#f4f4f0" stroke="#999"/><path d="M205 110h24M205 116h24M205 122h16" stroke="#999"/>`,
+  ok:["A man is reading a newspaper.","A man is sitting on a bench."],
+  no:["A man is folding a newspaper.","A man is lying on the grass.","A bench is being painted.","A man is feeding some birds."]},
+ {id:"copier",draw:(r)=>SV.room("#eef0f3","#a9a39a")+`<rect x="200" y="110" width="120" height="90" rx="6" fill="#d7dade"/><rect x="200" y="100" width="120" height="14" fill="#b8bcc2"/><rect x="290" y="125" width="20" height="10" fill="#5cb85c"/><rect x="215" y="150" width="70" height="8" fill="#fff"/>`+SV.stand(160,225,{f:1,c:r.pick(SHIRT),sk:r.pick(SKIN),h:r.pick(HAIR),arms:[[46,10],[6,40]]}),
+  ok:["A woman is using a copy machine.","A woman is standing beside a photocopier."],
+  no:["A woman is repairing a printer.","A woman is handing out some papers.","Some paper is being delivered.","A woman is plugging in a machine."]}
+];
+function genP1(r){
+  const s=r.draw("p1",P1S);
+  const c=r.pick(s.ok);
+  const others=P1S.filter(x=>x!==s).map(x=>x.ok[0]);
+  const ds=[...r.sample(s.no,2),r.pick(others)];
+  const q=mkQ(r,"Choisis la phrase qui décrit le mieux la photo.",c,ds,"photo");
+  q.hide=1;
+  return {p:"1",scene:SV.wrap("",s.draw(r)),audio:q.o.map((t,i)=>["N",LET[i]+". "+t]),qs:[q]};
+}
+
+/* ===== PARTIE 2 : questions-réponses ===== [question, bonne réponse, piège1, piège2, type] */
+const P2B=[
+["Where is the staff meeting being held?","In the conference room on the third floor.","At ten o'clock, I think.","Yes, it was very productive.","ou"],
+["When will the new printer be delivered?","Sometime on {DAY} morning.","On the second floor.","It prints in color.","quand"],
+["Who's in charge of the budget report?","{F} {L} from accounting.","By the end of the month.","It's over budget.","qui"],
+["Why was the flight to {CITY} canceled?","Because of the storm.","Two tickets, please.","It leaves from gate twelve.","pourquoi"],
+["How long does it take to get to the airport?","About forty minutes by taxi.","It's a long flight.","At the airport.","comment"],
+["Would you like me to call a taxi for you?","Thanks, that would be great.","It costs about thirty dollars.","He called yesterday.","proposition"],
+["Have you finished the sales presentation yet?","I'm still working on the last slides.","The sales went up.","He presented it last year.","ouinon"],
+["Should we order lunch or go out to eat?","Let's order. We're too busy today.","Yes, I ate already.","I ordered the supplies.","choix"],
+["The copier on this floor is out of order again.","I'll call the repair service.","Please put them in order.","On the fourth floor.","affirmation"],
+["Could you send me the updated schedule?","Sure, I'll e-mail it right away.","I sent the package.","It's a busy day.","demande"],
+["Why don't we take a short break?","Good idea, I need some coffee.","Because it broke.","No, it isn't broken.","suggestion"],
+["Which hotel did you book for the conference?","The one next to the convention center.","I'm reading a good book.","The conference starts on {DAY}.","quel"],
+["How many people are coming to the training session?","About twenty, I believe.","It's in the training room.","Yes, I'm coming.","combien"],
+["Isn't the store open on Sundays?","Only in the afternoon.","I store them in the cabinet.","I bought it on sale.","negative"],
+["Who should I give these forms to?","Leave them with the receptionist.","Four copies, please.","Yes, I gave them.","qui"],
+["When does the new manager start?","Next Monday, I heard.","In the manager's office.","She managed it well.","quand"],
+["Where can I find paper for the printer?","In the supply closet down the hall.","I read it in the paper.","It's printing now.","ou"],
+["Do you know if {M} is coming to the party?","He said he'd try.","It was a great party.","Yes, I know the way.","ouinon"],
+["How did the interview go?","Better than I expected.","It's at two o'clock.","I'll go by train.","comment"],
+["You've worked here for a long time, haven't you?","Almost ten years now.","It's a long way.","I'll work on it tonight.","negative"],
+["Would you prefer a window or an aisle seat?","A window seat, please.","The window is open.","Yes, I would.","choix"],
+["What time does the bank close today?","At five, as usual.","I'll close the window.","It's near the post office.","quand"],
+["Why hasn't the shipment arrived yet?","The truck was delayed by traffic.","By express mail.","Yes, it arrived.","pourquoi"],
+["Can you help me move these boxes?","Sure, where do they go?","They're moving next month.","The box is empty.","demande"],
+["Let's review the contract before we sign it.","Good idea, I'll make copies.","He signed up for the course.","The sign is too small.","suggestion"],
+["How much does the membership cost?","Fifty dollars a year.","Very much, thank you.","Members only.","combien"],
+["Is this seat taken?","No, go ahead.","I took the bus.","It's a comfortable seat.","ouinon"],
+["Who's going to lead the workshop?","Someone from the head office.","It's a three-day workshop.","I'm leaving early.","qui"],
+["Where did you put the client files?","They're on your desk.","I filed a complaint.","The client called.","ou"],
+["When is the deadline for the proposal?","It's due this Friday.","I'll propose a new plan.","At the main office.","quand"],
+["Why is the parking lot closed today?","They're repainting the lines.","Close to the entrance.","I parked there.","pourquoi"],
+["Do you want to join us for dinner tonight?","I'd love to, but I have plans.","Dinner was delicious.","I joined last year.","proposition"],
+["How often do you check your e-mail?","Several times a day.","By e-mail, please.","It's a new account.","comment"],
+["Has the client approved the design?","Not yet. She wants a few changes.","It's a modern design.","She signed the receipt.","ouinon"],
+["Whose turn is it to clean the break room?","I think it's {M}'s.","It's on the left.","Turn right at the corner.","qui"],
+["The quarterly report looks great.","Thanks, the team worked hard on it.","Four times a year.","It reports to the manager.","affirmation"],
+["Shall I reserve a table for six?","Make it eight, just in case.","It's a large table.","Six o'clock is fine.","proposition"],
+["How do I get to the train station from here?","Take the number twelve bus.","It's a training session.","It leaves at noon.","comment"],
+["Aren't you going to the conference in {CITY}?","No, my manager is going instead.","Yes, it was there last year.","The conference room is booked.","negative"],
+["What's the weather supposed to be like tomorrow?","Sunny, according to the forecast.","Whether you like it or not.","I'm supposed to go.","quoi"],
+["Where should I park my car?","There's a visitors' lot behind the building.","In the park.","It's a new car.","ou"],
+["Could you lower the volume a little?","Sorry. Is that better?","The volume of sales.","It's a little low.","demande"],
+["Who sent these flowers?","They're from the marketing team.","Twelve roses.","In the reception area.","qui"],
+["When will the renovations be finished?","Not until the end of next month.","The new paint is blue.","In the lobby.","quand"],
+["Why did {F} leave the meeting early?","She had a doctor's appointment.","No, she left it on the table.","It starts early.","pourquoi"],
+["Would you mind checking these figures?","Not at all. Leave them here.","They figured it out.","Yes, I checked in.","demande"],
+["Is the cafeteria open for breakfast?","Yes, from seven to ten.","I had eggs and toast.","It's an open office.","ouinon"],
+["How about meeting on Thursday instead?","That works for me.","About two hours.","I met him on Thursday.","suggestion"],
+["Which department does {M} work in?","He's in {DEPT}.","He works very hard.","The department store.","quel"],
+["I can't find my security badge.","Did you check your coat pocket?","Security is very important.","It's not bad.","affirmation"],
+["Do you have this jacket in a larger size?","Let me check in the back.","It's a nice jacket.","Yes, I have a large office.","ouinon"],
+["How was your trip to {CITY}?","Very productive, thanks.","I'll take the train.","It's a short trip.","comment"],
+["Should I print the agenda for everyone?","Just send it by e-mail.","The printer is new.","It was on the agenda.","proposition"],
+["Where's the closest pharmacy?","There's one across the street.","It closes at nine.","Some medicine.","ou"],
+["When did you move to this office?","About three months ago.","It's a big move.","On the fifth floor.","quand"],
+["Why don't you ask {F} for help?","She's on vacation this week.","Yes, I helped her.","Because it's helpful.","suggestion"],
+["How many copies do you need?","Twenty should be enough.","I need a coffee.","The copies are clear.","combien"],
+["Did anyone call while I was out?","Yes, {M} from {CO}.","No, I'm going out.","It was a long call.","ouinon"],
+["Can I pay by credit card?","Of course.","It's a credit to the team.","I paid yesterday.","demande"],
+["Who approved the new vacation policy?","The board of directors.","Two weeks of vacation.","A new police officer.","qui"],
+["Are you taking the train or driving to the meeting?","I'll drive. It's faster.","I'm training new staff.","The meeting was good.","choix"],
+["What did you think of the new logo?","I like the colors.","I think so too.","I'll go there.","quoi"],
+["This invoice has the wrong amount.","I'll send you a corrected one.","It's a large amount of work.","Yes, I sent it.","affirmation"],
+["When are you leaving for your vacation?","The day after tomorrow.","For two weeks.","To the beach.","quand"],
+["How do you like your new apartment?","It's much closer to work.","I'd like an apartment.","I like it too.","comment"],
+["Where are the extra chairs kept?","In the storage room.","Keep the change.","Yes, they're extra.","ou"],
+["Why are the lights off in the lobby?","The electrician is working on them.","I'll turn left.","They're very light.","pourquoi"],
+["Would you like some help with that?","Thanks, but I can manage.","Yes, I like it.","That was helpful.","proposition"],
+["How soon can you deliver the order?","Within two business days.","In order of size.","It was delivered.","comment"],
+["Who's the woman talking to {M}?","That's our new director.","She's talking about sales.","I'll talk to her.","qui"],
+["Didn't you get my message?","Sorry, my phone was off.","Yes, a large massage.","He got it from the store.","negative"],
+["Which bus goes downtown?","The number five.","It's a business trip.","Yes, it does.","quel"],
+["The new software is really easy to use.","Yes, the training helped a lot.","It's a soft chair.","I used it last year.","affirmation"],
+["What's the best way to contact {F}?","Her e-mail address is in the directory.","She's the best.","In contact with the client.","quoi"],
+["Will the store be open on the holiday?","Only until noon.","It was a nice holiday.","Yes, it's a big store.","ouinon"]
+];
+const P2TAG={ou:"Où ?",quand:"Quand ?",qui:"Qui ?",pourquoi:"Pourquoi ?",comment:"Comment ?",combien:"Combien ?",quel:"Lequel ?",quoi:"Quoi ?",ouinon:"Question fermée (oui/non)",negative:"Question négative / tag",choix:"Question à choix",proposition:"Proposition / offre",demande:"Demande",suggestion:"Suggestion",affirmation:"Affirmation"};
+function genP2(r){
+  const it=r.draw("p2",P2B),c=ctx(r);
+  const q=mkQ(r,"Choisis la meilleure réponse.",fill(it[1],c),[fill(it[2],c),fill(it[3],c)],"p2_"+it[4],null,3);
+  q.hide=1;q.tr=fill(it[0],c);
+  const v=r.f()<.5?["W","M"]:["M","W"];
+  return {p:"2",audio:[[v[0],q.tr],...q.o.map((t,i)=>[v[1],LET[i]+". "+t])],qs:[q]};
+}
+
+/* ===== PARTIES 3 et 4 : conversations et exposés ===== tags : gen (idée générale), det (détail), inf (déduction), next (action suivante) */
+const P3T=[
+(c,r)=>{const topic=r.pick(["budget","marketing","project","sales"]),docs=["sales figures","budget report","customer survey results","project timeline"],doc=r.pick(docs);return{L:[
+["W",`Hi ${c.M}, it's ${c.F}. I'm calling about the ${topic} meeting on ${c.D0}. Something has come up, and I won't be in the office that day.`],
+["M",`No problem. Would ${c.D2} work for you instead? Most of the team is free in the afternoon.`],
+["W",`${c.D2} afternoon is fine. I'll send everyone an updated invitation.`],
+["M",`Great. And could you bring the ${doc} from last quarter? We'll need them for the discussion.`]],Q:[
+["What is the purpose of the call?","To reschedule a meeting",["To order some supplies","To ask for directions","To apply for a job"],"gen"],
+["When will the meeting probably take place?",`On ${c.D2} afternoon`,[`On ${c.D0} morning`,`On ${c.D1} afternoon`,`On ${c.D0} afternoon`],"det"],
+["What does the man ask the woman to bring?",doc[0].toUpperCase()+doc.slice(1),docs.filter(d=>d!==doc).map(d=>d[0].toUpperCase()+d.slice(1)),"det"]]}},
+(c,r)=>{const comp=r.pick([["refund the shipping fee","Refund a fee"],["give you twenty percent off your next order","Offer a discount"],["upgrade you to express delivery at no cost","Upgrade the delivery"]]);return{L:[
+["M",`Hello, I'm calling about an order I placed online last week. The order number is ${c.NUM}. It was supposed to arrive on ${c.D0}, but I still haven't received it.`],
+["W",`I'm sorry about that. Let me check... It looks like the ${c.PROD} you ordered were out of stock at our warehouse, so the shipment was delayed.`],
+["M","I see. When can I expect them?"],
+["W",`They should ship tomorrow. To make up for the delay, I'll ${comp[0]}.`]],Q:[
+["Why is the man calling?","An order has not arrived.",["A product is damaged.","He was charged twice.","He wants to cancel a subscription."],"gen"],
+["What caused the problem?","Some items were out of stock.",["The address was incorrect.","A delivery truck broke down.","A payment was refused."],"det"],
+["What does the woman offer to do?",comp[1],["Refund a fee","Offer a discount","Upgrade the delivery","Send a free catalog","Call the warehouse manager"],"next"]]}},
+(c,r)=>{const fr=r.pick(["fifteen","twenty","thirty"]),n=r.pick(["two","three","four"]),pr=r.pick(["one hundred and twenty","one hundred and forty","ninety-five"]);return{L:[
+["W",`Good afternoon, ${c.HOTEL}. How may I help you?`],
+["M",`Hi, I'd like to book a room for ${n} nights, starting ${c.DAY}. I'm attending a conference at the convention center nearby.`],
+["W",`Certainly. We have a standard room available for ${pr} dollars a night, and breakfast is included.`],
+["M","That sounds good. Is there a shuttle to the convention center?"],
+["W",`Yes, it leaves from the front entrance every ${fr} minutes.`]],Q:[
+["Who most likely is the woman?","A hotel receptionist",["A travel agent","A conference speaker","A taxi driver"],"inf"],
+["Why is the man traveling?","To attend a conference",["To visit his family","To interview for a job","To inspect a property"],"det"],
+["What does the woman say about the shuttle?",`It leaves every ${fr} minutes.`,["It leaves every five minutes.","It is not running this week.","It costs extra.",`It leaves every ${fr==="twenty"?"thirty":"twenty"} minutes.`],"det"]]}},
+(c,r)=>{const fl=r.pick(["second","fourth","fifth"]),doc=r.pick(["contract","proposal","handouts"]);return{L:[
+["M",`${c.F}, do you know what's wrong with the printer? I've been trying to print the ${doc} for the client meeting, but it keeps jamming.`],
+["W",`Oh, it's been doing that all morning. The technician is coming at ${c.T3}, but that might be too late for you.`],
+["M",`The meeting starts at ${c.T1}. What should I do?`],
+["W",`You can use the printer in the ${c.DEPT} department on the ${fl} floor. Just tell them I sent you.`]],Q:[
+["What problem does the man mention?","A printer is not working.",["A meeting was canceled.","A file is missing.","A client is late."],"gen"],
+["When will the technician arrive?",`At ${c.T3}`,[`At ${c.T1}`,`At ${c.T0}`,`At ${c.T2}`],"det"],
+["What does the woman suggest?","Using another department's printer",["Rescheduling the meeting","Calling the technician again","Sending the document by e-mail"],"next"]]}},
+(c,r)=>{const job=r.pick(["sales manager","graphic designer","accountant","software developer"]),it=r.pick([["a copy of your portfolio","A portfolio"],["a list of two references","A list of references"],["copies of your certificates","Copies of certificates"],["a form of identification","Identification"]]);return{L:[
+["W",`Hello, this is ${c.F} ${c.L} from the human resources department at ${c.CO}. We'd like to invite you for an interview for the ${job} position.`],
+["M","That's great news! When would you like me to come in?"],
+["W",`Are you available on ${c.DAY} at ${c.T1}? You'll meet with the ${c.DEPT} manager and two members of the team.`],
+["M","Yes, that works for me. Should I bring anything?"],
+["W",`Please bring ${it[0]}.`]],Q:[
+["Why is the woman calling?","To arrange an interview",["To offer a promotion","To confirm a delivery","To request a payment"],"gen"],
+["Who will the man meet?","A manager and two team members",["The company president","A group of clients","Only the woman"],"det"],
+["What should the man bring?",it[1],["A portfolio","A list of references","Copies of certificates","Identification","A signed contract"],"det"]]}},
+(c,r)=>({L:[
+["M",`${c.F}, ${c.M2}, our clients from ${c.CO2} arrive on ${c.DAY}. I'd like to take them to lunch. Any suggestions?`],
+["W",`How about ${c.REST}? The food is excellent, and they have private rooms.`],
+["M2","That's a good choice, but it's usually fully booked. You'd better call today."],
+["M","I'll do that right after this meeting."]],Q:[
+["What are the speakers discussing?","Where to take some clients",["How to prepare a presentation","When to hire new staff","Which supplier to choose"],"gen"],
+["What does the second man say about the restaurant?","It is often busy.",["It is expensive.","It is far away.","It has just opened."],"det"],
+["What will the first man probably do next?","Make a reservation",["Visit the clients' office","Cook a meal","Cancel a meeting"],"next"]]}),
+(c,r)=>{const t=r.pick(["two hours","three hours","ninety minutes"]);return{L:[
+["W",`Excuse me, I was supposed to fly to ${c.CITY} at ${c.T0}, but the board says my flight is delayed.`],
+["M",`Yes, I'm afraid there's a mechanical problem with the plane. It should depart in about ${t}.`],
+["W","Oh no. I have an important meeting there this evening. Is there any other option?"],
+["M","Let me check... There's a flight with our partner airline that leaves in forty minutes. I can put you on it at no extra cost."]],Q:[
+["Where does the conversation most likely take place?","At an airport",["At a train station","In a hotel lobby","At a travel agency"],"inf"],
+["Why is the flight delayed?","There is a mechanical problem.",["The weather is bad.","The crew is late.","The runway is closed."],"det"],
+["What does the man offer to do?","Move the woman to another flight",["Give her a hotel voucher","Refund her ticket","Give her a meal coupon"],"next"]]}},
+(c,r)=>{const tp=r.pick([["the company's computer system","The computer system"],["safety procedures","Safety procedures"],["the customer database","The customer database"],["our expense policy","Expense rules"]]);return{L:[
+["M",`Hi ${c.F}, welcome to ${c.CO}. I'm ${c.M}, and I'll be showing you around today.`],
+["W","Thanks! I'm excited to start. When does the training begin?"],
+["M",`The first session is at ${c.T0} in Room 204. It covers ${tp[0]}. After that, we'll have lunch with the rest of the ${c.DEPT} team.`],
+["W","Great. Do I need to bring my own laptop?"],
+["M","No, we'll give you one this afternoon, along with your security badge."]],Q:[
+["Who most likely is the woman?","A new employee",["A client","A trainer","A job applicant"],"inf"],
+["What will the first training session cover?",tp[1],["The computer system","Safety procedures","The customer database","Expense rules","Sales techniques"],"det"],
+["What will the woman receive in the afternoon?","A laptop and a badge",["A uniform","A parking permit","A training manual"],"det"]]}},
+(c,r)=>{const n=r.pick([["fifty","forty"],["one hundred","eighty"],["two hundred","one hundred and fifty"]]);return{L:[
+["W",`Hi, this is ${c.F} from ${c.CO}. We received our delivery of ${c.PROD} this morning, but there's a problem. We ordered ${n[0]}, but only ${n[1]} were in the boxes.`],
+["M","I'm very sorry about that. I'll send the missing items by express delivery today. They'll arrive tomorrow morning."],
+["W","Thank you. Also, could you send me an updated invoice? Our accounting department needs it."],
+["M","Of course. I'll e-mail it within the hour."]],Q:[
+["What problem does the woman mention?","Some items are missing.",["Some items are damaged.","An order went to the wrong address.","The price is incorrect."],"gen"],
+["When will the missing items arrive?","Tomorrow morning",["This afternoon","Next week","In two days"],"det"],
+["What does the woman ask for?","An updated invoice",["A refund","A product catalog","A new contract"],"det"]]}},
+(c,r)=>{const fl=r.pick(["sixth","eighth","tenth"]);return{L:[
+["M",`Have you heard? Our department is moving to the ${fl} floor next week.`],
+["W","Yes, I got the e-mail. I'm glad. The new space has more meeting rooms. But I'm worried about packing everything in time."],
+["M",`The facilities team will bring boxes on ${c.D0}, and a moving company will carry everything on the weekend.`],
+["W","That's a relief. I'll start clearing out my files today, then."]],Q:[
+["What are the speakers mainly discussing?","An office relocation",["A new employee","A company merger","A holiday schedule"],"gen"],
+["What does the woman like about the new space?","It has more meeting rooms.",["It has bigger windows.","It is closer to the cafeteria.","It has new computers."],"det"],
+["What will the woman probably do today?","Organize her files",["Buy some boxes","Call a moving company","Visit the new floor"],"next"]]}},
+(c,r)=>{const n=r.pick(["three","four","five"]),pl=r.pick(["airport","central train station"]);return{L:[
+["M",`Hi, I have a reservation for a compact car under the name ${c.L}.`],
+["W",`Let me see... Yes, Mr. ${c.L}, for ${n} days. Actually, we're out of compact cars today, so I'm giving you a mid-size car at the same price.`],
+["M","Oh, that's great. Where do I return it?"],
+["W",`You can return it here or at our office at the ${pl}. Just make sure the tank is full, or you'll be charged a fee.`]],Q:[
+["Where most likely are the speakers?","At a car rental agency",["At a repair shop","At a gas station","At a parking garage"],"inf"],
+["What does the woman say about the car?","It is larger than the one reserved.",["It needs some repairs.","It costs more than expected.","It will be ready tomorrow."],"det"],
+["What must the man do to avoid a fee?","Fill the gas tank",["Return the car early","Clean the car","Pay in cash"],"det"]]}},
+(c,r)=>{const p=r.pick(["twelve","fifteen","eighteen","twenty"]);return{L:[
+["W",`${c.M}, have you seen the results of the online advertising campaign?`],
+["M",`Yes. Sales of our ${c.PROD} went up by ${p} percent last month. The videos on social media were especially popular.`],
+["W","That's impressive. I think we should increase the advertising budget for next quarter."],
+["M",`I agree. Let's present the numbers to the director at ${c.DAY}'s meeting.`]],Q:[
+["What are the speakers discussing?","The results of an advertising campaign",["A problem with a product","A plan to hire staff","A training program"],"gen"],
+["By how much did sales increase?",`${p} percent`,["twelve percent","fifteen percent","eighteen percent","twenty percent","thirty percent"].map(x=>x[0].toUpperCase()+x.slice(1)).map(x=>x.toLowerCase()),"det"],
+["What do the speakers plan to do?","Present results to a director",["Hire an advertising agency","Launch a new product","Reduce the budget"],"next"]]}},
+(c,r)=>{const fee=r.pick(["three hundred","four hundred and fifty","five hundred"]);return{L:[
+["M",`Hello, I'd like to register for the marketing conference in ${c.CITY} next month. Is it still possible?`],
+["W",`Yes, but the early registration discount ended yesterday, so the fee is now ${fee} dollars.`],
+["M","That's fine. My company is paying. Can I sign up for the workshops at the same time?"],
+["W","Certainly. I'll e-mail you the list of workshops, and you can choose up to three."]],Q:[
+["What does the man want to do?","Register for a conference",["Book a flight","Give a presentation","Cancel a reservation"],"gen"],
+["What does the woman say about the discount?","It is no longer available.",["It is only for members.","It applies to groups.","It ends tomorrow."],"det"],
+["What will the woman send the man?","A list of workshops",["An invoice","A map","A ticket"],"next"]]}},
+(c,r)=>{const pr=r.pick(["two thousand","three thousand five hundred","four thousand"]);return{L:[
+["W","Thanks for showing me the office space. I really like the location, so close to the subway."],
+["M",`Yes, and the rent includes electricity and Internet. It's ${pr} dollars a month.`],
+["W","That's a bit more than we planned to spend. Would the owner accept a lower rent for a two-year lease?"],
+["M","Possibly. I'll talk to her this afternoon and call you back."]],Q:[
+["Who most likely is the man?","A real estate agent",["An electrician","A subway employee","A bank manager"],"inf"],
+["What does the woman like about the office space?","Its location",["Its size","Its view","Its price"],"det"],
+["What will the man do this afternoon?","Speak with the owner",["Show another office","Sign a contract","Install the Internet"],"next"]]}}
+,(c,r)=>({L:[
+["W",`${c.M}, ${c.M2}, I just got an e-mail from accounting. We have to submit our travel expense reports by ${c.D1} this week, not next week.`],
+["M",`${c.D1}? I haven't even collected my receipts from the ${c.CITY} trip yet.`],
+["M2","The new online form is quite fast, though. It only took me about ten minutes."],
+["W",`Good. And if anyone needs help, ${c.F2} in accounting offered to explain it.`]],Q:[
+["What has changed?","A deadline",["A travel destination","A meeting location","A payment amount"],"gen"],
+["What does the second man say about the new form?","It is quick to complete.",["It is confusing.","It is not working.","It requires a signature."],"det"],
+["According to the woman, who can help?","A colleague in accounting",["The director","A travel agent","An IT technician"],"det"]]}),
+(c,r)=>{const it=r.pick(["coffee maker","electric kettle","pair of headphones","desk lamp"]),n=r.pick(["ten","fifteen","twenty"]);return{L:[
+["M",`Hi, I bought this ${it} here last week, but it stopped working after two days.`],
+["W","I'm sorry to hear that. Do you have your receipt?"],
+["M","Yes, here it is. I'd like to exchange it for a new one."],
+["W",`Unfortunately, that model is sold out. I can give you a full refund, or you could choose a newer model for ${n} dollars more.`]],Q:[
+["Why is the man at the store?","To return a defective item",["To buy a gift","To ask about a price","To pick up an order"],"gen"],
+["What does the woman ask for?","A receipt",["An ID card","A phone number","A credit card"],"det"],
+["What problem does the woman mention?","A model is sold out.",["The store closes soon.","Refunds take a week.","The receipt has expired."],"det"]]}}
+];
+const P4T=[
+(c,r)=>{const col=r.pick(["blue","gray","black"]),ext=r.pick(["two-one-five","four-three-zero","six-zero-eight"]);return{L:[["N",`Hi ${c.F}, this is ${c.M} from ${c.CO}. I'm calling about the ${c.PROD} you ordered. Unfortunately, the ${col} model you chose won't be available until ${c.MONTH2}. We can either deliver a white model this week or wait for your original choice. Please call me back at extension ${ext} before ${c.DAY} to let me know.`]],Q:[
+["Why is the speaker calling?","To report a delay with an order",["To confirm a payment","To offer a promotion","To arrange an interview"],"gen"],
+["What does the speaker offer?","A product in a different color",["A full refund","Free installation","A larger model"],"det"],
+["What does the speaker ask the listener to do?","Return his call",["Visit the store","Send an e-mail","Sign a form"],"next"]]}},
+(c,r)=>{const g=r.int(10,40),g0=g+r.int(2,9),fl=r.int(200,899),rs=r.pick([["a scheduling change","Rescheduled crew"],["maintenance work at the original gate","Maintenance work"]]);return{L:[["N",`Attention, passengers on Silverline Airlines flight ${fl} to ${c.CITY}. Due to ${rs[0]}, this flight will now depart from gate ${g} instead of gate ${g0}. Boarding will begin in twenty minutes. Passengers traveling with small children are invited to board first. We apologize for any inconvenience.`]],Q:[
+["Where is the announcement being made?","At an airport",["On a train","At a bus terminal","On a ship"],"inf"],
+["What has changed?","The departure gate",["The departure time","The destination","The airline"],"det"],
+["Who is invited to board first?","Passengers with young children",["First-class passengers","Airline employees","Passengers with large bags"],"det"]]}},
+(c,r)=>{const cat=r.pick(["winter coats","kitchen items","children's toys","sports equipment"]),p=r.pick(["thirty","forty","fifty"]);return{L:[["N",`Good evening, shoppers. The store will be closing in fifteen minutes. Please bring your final purchases to the registers at the front. Don't forget that this weekend we're having our annual sale. All ${cat} will be ${p} percent off. Members of our rewards program can also enter the store one hour early on Saturday.`]],Q:[
+["When is the announcement being made?","Shortly before the store closes",["When the store opens","During a lunch break","At midnight"],"inf"],
+["What will be on sale this weekend?",cat[0].toUpperCase()+cat.slice(1),["Winter coats","Kitchen items","Children's toys","Sports equipment","Electronics"],"det"],
+["What benefit do rewards members receive?","Early entry to the store",["Free delivery","An extra discount","A free gift"],"det"]]}},
+(c,r)=>{const h=r.int(5,95);return{L:[["N",`This is ${c.M} with your ${c.CITY} traffic report. Traffic is moving slowly on Highway ${h} this morning because of road repairs near the ${c.STREET} Street exit. Drivers should use River Road instead. And now for the weather: expect rain until noon, then sunny skies this afternoon. Stay tuned for business news after this short break.`]],Q:[
+["What is causing the delays?","Road repairs",["An accident","Heavy snow","A parade"],"det"],
+["What does the speaker recommend?","Taking another road",["Leaving home later","Using public transportation","Driving slowly"],"det"],
+["What will listeners hear next?","An advertisement",["A weather report","Sports news","An interview"],"inf"]]}},
+(c,r)=>{const pd=r.pick(["chocolates","cookies","fruit juices","cheeses"]);return{L:[["N",`Welcome to the ${c.CO.split(" ")[0]} factory tour. My name is ${c.F}, and I'll be your guide today. We'll start in the production area, where you'll see how our ${pd} are made. For safety reasons, please wear the glasses we gave you at the entrance, and don't touch any of the machines. At the end of the tour, you can taste free samples in our gift shop.`]],Q:[
+["Who most likely is the speaker?","A tour guide",["A factory worker","A shop assistant","A safety inspector"],"inf"],
+["What are listeners asked to do?","Wear safety glasses",["Turn off their phones","Stay in the gift shop","Take some photos"],"det"],
+["What will happen at the end of the tour?","Listeners will taste some products.",["Listeners will watch a video.","Listeners will meet the director.","Listeners will receive a discount coupon."],"det"]]}},
+(c,r)=>{const sys=r.pick(["accounting software","online booking system","customer database"]);return{L:[["N",`Before we finish, I have an update about the new ${sys}. The installation, which was planned for this month, has been postponed until ${c.MONTH2} because the supplier needs more time. In the meantime, please continue using the old system. ${c.F} from the IT department will organize training sessions next month, so watch for her e-mail.`]],Q:[
+["What is the main topic of the talk?","A delay in a project",["A new manager","A change in office hours","A budget cut"],"gen"],
+["Why has the installation been postponed?","The supplier needs more time.",["The budget was reduced.","The staff is too busy.","The old system still works well."],"det"],
+[`What will ${c.F} do?`,"Organize training sessions",["Install the system","Contact the supplier","Hire new staff"],"next"]]}},
+(c,r)=>({L:[["N",`Looking for a gym near your office? Peak Fitness has just opened its third location downtown, on ${c.STREET} Street. We're open twenty-four hours a day, and new members get their first month free. Sign up on our Web site before ${c.MONTH} thirtieth and receive a free session with a personal trainer.`]],Q:[
+["What is being advertised?","A fitness center",["A sports store","A medical clinic","A restaurant"],"gen"],
+["What is mentioned about the new location?","It is downtown.",["It has a swimming pool.","It is near a train station.","It will open next year."],"det"],
+["How can listeners receive a free training session?","By registering online",["By bringing a friend","By paying for a year","By visiting on a weekend"],"det"]]}),
+(c,r)=>{const n=r.pick(["three hundred","five hundred","eight hundred"]);return{L:[["N",`In business news, ${c.CO} announced yesterday that it will open a new factory in ${c.CITY} next year. The factory is expected to create about ${n} jobs. The company's president, ${c.F} ${c.L}, said the location was chosen because of its easy access to the port. Construction will begin in ${c.MONTH}.`]],Q:[
+["What did the company announce?","The opening of a factory",["A new president","A drop in profits","A merger"],"gen"],
+["Why was the location chosen?","It is close to a port.",["Land is inexpensive.","Workers are available.","The president lives there."],"det"],
+["When will construction begin?",`In ${c.MONTH}`,B.month.filter(m=>m!==c.MONTH).map(m=>"In "+m),"det"]]}},
+(c,r)=>{const tp=r.pick(["leadership","online marketing","customer service","time management"]);return{L:[["N",`Good morning, everyone, and welcome to this year's business conference. I'm pleased to introduce our first speaker, Dr. ${c.M} ${c.L}. Dr. ${c.L} has spent fifteen years studying ${tp}, and his latest book has become a best seller. Today, he'll share some practical tips that you can use in your own companies. After his talk, there will be time for questions.`]],Q:[
+["Where is the talk most likely taking place?","At a conference",["At a bookstore","At a university graduation","At a job interview"],"inf"],
+[`What is mentioned about Dr. ${c.L}?`,"He wrote a successful book.",["He founded a company.","He is a new employee.","He won an award."],"det"],
+["What will happen after the talk?","A question-and-answer session",["A lunch break","A book signing","A video presentation"],"next"]]}},
+(c,r)=>({L:[["N",`Thank you for calling ${c.CO.includes("Bank")?c.CO:"Pinewood Bank"}. Our offices are currently closed. Our business hours are Monday to Friday, from eight A.M. to six P.M. If you have lost your credit card, press one to speak with an agent at any time. To check your account balance, press two. You can also manage your account through our mobile app.`]],Q:[
+["Why can't the caller speak to an employee now?","The office is closed.",["All agents are busy.","It is a holiday.","The phone system is being repaired."],"det"],
+["What should a caller who has lost a card do?","Press one",["Press two","Visit a branch","Use the mobile app"],"det"],
+["What is mentioned about the mobile app?","It can be used to manage an account.",["It was recently updated.","It is free for students.","It offers discounts."],"det"]]}),
+(c,r)=>{const g=r.pick(["a trip to "+c.CITY,"a new bicycle","a painting by a local artist"]);return{L:[["N",`Thank you all for coming to celebrate ${c.F} ${c.L}'s retirement. ${c.F} joined ${c.CO} thirty years ago as a sales assistant, and she has led our ${c.DEPT} department for the last ten years. Thanks to her, our team won the regional service award three times. ${c.F}, we've prepared a small gift to thank you: ${g}.`]],Q:[
+["What is the purpose of the event?","To celebrate a retirement",["To welcome a new employee","To announce a promotion","To launch a product"],"gen"],
+[`What position does ${c.F} currently hold?`,"Head of a department",["Sales assistant","Company president","Award judge"],"det"],
+[`What is ${c.F} receiving?`,g[0].toUpperCase()+g.slice(1),["A trip to "+c.CITY2,"A new bicycle","A painting by a local artist","A gold watch"],"det"]]}},
+(c,r)=>{const m=r.pick(["twenty","twenty-five","forty"]);return{L:[["N",`Attention, passengers. The ${c.T0} train to ${c.CITY} is running about ${m} minutes late because of a signal problem. We apologize for the delay. To thank you for your patience, the café on platform three is offering free coffee to all passengers on this train.`]],Q:[
+["Why is the train late?","There is a signal problem.",["The weather is bad.","A driver is sick.","The tracks are being repaired."],"det"],
+["How late is the train?",`About ${m} minutes`,["About twenty minutes","About twenty-five minutes","About forty minutes","About ten minutes"],"det"],
+["What is being offered to passengers?","Free coffee",["A ticket refund","A free newspaper","A seat upgrade"],"det"]]}},
+(c,r)=>({L:[["N",`Welcome to the ${c.CITY} Museum of Modern Art. Our new exhibit of photographs by ${c.M} ${c.L} is on the second floor. Please note that taking pictures is not allowed in this exhibit. Audio guides are available at the information desk for five dollars. The museum café, on the ground floor, will close early today, at three o'clock, for a private event.`]],Q:[
+["What is new at the museum?","A photography exhibit",["A gift shop","A café","A sculpture garden"],"gen"],
+["What are visitors not allowed to do?","Take pictures",["Eat in the exhibit","Use audio guides","Visit the second floor"],"det"],
+["Why will the café close early?","A private event will be held.",["It is being renovated.","The staff is in training.","It is a holiday."],"det"]]}),
+(c,r)=>({L:[["N",`Hello, everyone. Starting next month, employees will be able to work from home two days a week. To take part, you'll need to fill out a request form and get approval from your manager. The form is available on the company intranet. If you have any questions, please contact ${c.F} in human resources.`]],Q:[
+["What is the main topic of the talk?","A new work policy",["A training program","A company party","An office renovation"],"gen"],
+["What must employees do to take part?","Get approval from a manager",["Attend a meeting","Buy a laptop","Work longer hours"],"det"],
+["Who should listeners contact with questions?","A human resources employee",["Their manager","The IT department","The company president"],"det"]]})
+];
+function buildLR(r,T,key,p){
+  const c=ctx(r),t=r.draw(key,T)(c,r);
+  return {p,audio:t.L,qs:t.Q.map(q=>mkQ(r,q[0],q[1],q[2],q[3]))};
+}
+const genP3=r=>buildLR(r,P3T,"p3","3"),genP4=r=>buildLR(r,P4T,"p4","4");
+const LTAG={gen:"Idée générale",det:"Détail précis",inf:"Déduction (qui/où)",next:"Action suivante / proposition"};
+
+/* ===== PARTIE 5 : phrases incomplètes ===== [tag, phrase, bonne réponse, [pièges], explication] */
+const P5TAG={forme:"Nature des mots",temps:"Temps des verbes",prep:"Prépositions",conn:"Connecteurs",pron:"Pronoms et relatifs",verbe:"Gérondif ou infinitif",comp:"Comparatifs",passif:"Voix passive",vocab:"Vocabulaire"};
+const P5B=[
+["forme","Ms. {L} ___ reviewed the contract before signing it.","carefully",["careful","care","caring"],"Un adverbe (-ly) modifie le verbe « reviewed »."],
+["forme","The ___ of the new software took longer than expected.","installation",["install","installed","installing"],"Après « The » et avant « of », il faut un nom."],
+["forme","{CO} has become one of the most ___ companies in the region.","successful",["success","succeed","successfully"],"Devant le nom « companies », il faut un adjectif."],
+["forme","The manager was impressed by the ___ of the new assistant.","efficiency",["efficient","efficiently","more efficient"],"Après « the » et avant « of », il faut un nom."],
+["forme","Our customer service team responds ___ to all complaints.","promptly",["prompt","prompted","promptness"],"Un adverbe modifie le verbe « responds »."],
+["forme","All employees must attend the ___ session on {DAY}.","training",["trained","trains","trainable"],"« training session » : nom utilisé comme adjectif, expression figée."],
+["forme","The new advertising campaign was ___ effective.","extremely",["extreme","extremity","extremes"],"Un adverbe modifie l'adjectif « effective »."],
+["forme","Mr. {L} gave a very ___ presentation about the company's future.","informative",["inform","information","informatively"],"Après « very » et devant un nom, il faut un adjectif."],
+["forme","The hotel offers ___ rates for groups of ten or more.","competitive",["compete","competition","competitively"],"Devant le nom « rates », il faut un adjectif."],
+["forme","Applicants should have ___ experience in sales.","considerable",["consider","considerably","consideration"],"Devant le nom « experience », il faut un adjectif."],
+["forme","The factory's ___ increased by 15 percent last year.","production",["produced","productive","productively"],"Après le possessif « factory's », il faut un nom sujet."],
+["forme","Please read the instructions ___ before using the machine.","thoroughly",["thorough","thoroughness","more thorough"],"Un adverbe modifie le verbe « read »."],
+["forme","The board will make a final ___ next week.","decision",["decide","decisive","decisively"],"Après l'adjectif « final », il faut un nom."],
+["forme","Visitors are asked to remain ___ during the performance.","quiet",["quietly","quietness","quieten"],"Après « remain » (verbe d'état), on met un adjectif."],
+["forme","The company's annual report is ___ on its Web site.","available",["availability","avail","availably"],"Après « is », il faut un adjectif attribut."],
+["forme","Our ___ will contact you within two business days.","representative",["represent","representation","representing"],"Il faut un nom de personne sujet du verbe « contact »."],
+["forme","Profits rose ___ after the new product was launched.","sharply",["sharp","sharpen","sharpness"],"Un adverbe modifie le verbe « rose »."],
+["forme","The museum is ___ located near the central station.","conveniently",["convenient","convenience","conveniences"],"Un adverbe modifie le participe « located »."],
+["forme","Mr. {L}'s ___ to the project was greatly appreciated.","contribution",["contribute","contributed","contributing"],"Après le possessif, il faut un nom."],
+["forme","The new office chairs are much more ___ than the old ones.","comfortable",["comfort","comfortably","comforts"],"« more + adjectif + than » : comparatif d'un adjectif."],
+["forme","The new policy has been ___ accepted by the staff.","widely",["wide","width","widen"],"Un adverbe se place entre l'auxiliaire et le participe."],
+["forme","Ms. {L} is ___ for organizing the annual conference.","responsible",["responsibility","responsibly","response"],"« be responsible for » : adjectif après « is »."],
+["forme","The ___ of the two companies will be announced on {DAY}.","merger",["merge","merges","merged"],"Après « The » et avant « of », il faut un nom."],
+["forme","Please handle the boxes ___ because they contain glass.","gently",["gentle","gentleness","gentler"],"Un adverbe modifie le verbe « handle »."],
+["forme","The seminar received very ___ feedback from participants.","positive",["positively","positivity","positives"],"Devant le nom « feedback », il faut un adjectif."],
+["temps","Ms. {L} ___ for {CO} since 2019.","has worked",["works","worked","will work"],"« since » + point de départ : present perfect."],
+["temps","The shipment ___ next {DAY}, according to the supplier.","will arrive",["arrived","has arrived","arriving"],"« next {DAY} » indique le futur."],
+["temps","When Mr. {L} called, the team ___ a meeting.","was having",["has","will have","have had"],"Action en cours dans le passé, interrompue : past continuous."],
+["temps","By the end of this year, the company ___ three new branches.","will have opened",["opens","opened","has been opening"],"« By the end of » + futur : futur antérieur."],
+["temps","Last week, the director ___ the new budget.","approved",["approves","will approve","approving"],"« Last week » : prétérit."],
+["temps","Please call me as soon as the documents ___.","arrive",["will arrive","arrived","arriving"],"Après « as soon as » à sens futur, on met le présent."],
+["temps","The marketing team usually ___ on Monday mornings.","meets",["meet","meeting","is met"],"« usually » + sujet singulier : présent simple avec -s."],
+["temps","{M} ___ the report yet, so we can't send it to the client.","hasn't finished",["didn't finish","doesn't finish","won't finished"],"« yet » en fin de phrase négative : present perfect."],
+["temps","If the weather is good tomorrow, the picnic ___ in the park.","will be held",["was held","would have been held","has held"],"« If + présent » : futur dans la principale."],
+["temps","The company ___ selling its products in Asia two years ago.","began",["begins","has begun","will begin"],"« two years ago » : prétérit."],
+["temps","Sales ___ steadily over the past three months.","have increased",["increase","will increase","are increased"],"« over the past three months » : present perfect."],
+["temps","Mr. {L} ___ the office when the client arrived.","had already left",["already leaves","has already left","will already leave"],"Action antérieure à une autre action passée : past perfect."],
+["prep","The conference will be held ___ {DAY}, {MONTH} 12.","on",["in","at","by"],"« on » devant un jour ou une date."],
+["prep","Please submit your report ___ Friday at the latest.","by",["until","since","during"],"« by » = au plus tard ; « until » = jusqu'à (durée)."],
+["prep","The store is open ___ 9 A.M. to 6 P.M.","from",["since","between","at"],"« from ... to ... »."],
+["prep","Mr. {L} has worked here ___ ten years.","for",["since","during","ago"],"« for » + durée ; « since » + point de départ."],
+["prep","Our offices are located ___ the fifth floor.","on",["in","at","over"],"« on the ... floor »."],
+["prep","No phone calls are allowed ___ the presentation.","during",["while","for","among"],"« during » + nom ; « while » + sujet + verbe."],
+["prep","The new employee will arrive ___ 10 A.M.","at",["on","in","for"],"« at » devant une heure."],
+["prep","The package was delivered to the wrong address ___ mistake.","by",["with","for","on"],"Expression figée : « by mistake »."],
+["prep","The price includes delivery ___ the city.","within",["among","between","onto"],"« within » = à l'intérieur de (zone, délai)."],
+["prep","Ms. {L} is responsible ___ training new staff.","for",["to","of","with"],"« responsible for »."],
+["prep","Customers can choose ___ three different payment plans.","from",["to","at","by"],"« choose from » = choisir parmi."],
+["prep","The bank is just ___ the street from the hotel.","across",["between","among","onto"],"« across the street from » = en face de."],
+["prep","Applications must be received no later ___ {MONTH} 15.","than",["then","by","to"],"Expression figée : « no later than »."],
+["prep","The workshop is designed ___ small business owners.","for",["at","about","of"],"« designed for » = conçu pour."],
+["conn","___ the train was late, Mr. {L} arrived at the meeting on time.","Although",["Despite","Because","However"],"« Although » + sujet + verbe ; « Despite » + nom."],
+["conn","The outdoor concert was canceled ___ the heavy rain.","because of",["because","although","so that"],"« because of » + nom ; « because » + sujet + verbe."],
+["conn","Sales were low in March. ___, they improved in April.","However",["Although","Despite","Unless"],"« However, » relie deux phrases et marque l'opposition."],
+["conn","You will not receive a refund ___ you keep your receipt.","unless",["so","whereas","despite"],"« unless » = sauf si."],
+["conn","___ the high price, many customers chose the premium model.","Despite",["Although","Even though","Because"],"« Despite » + nom (« the high price »)."],
+["conn","Please turn off the lights ___ you leave the office.","before",["during","despite","unless"],"« before » + sujet + verbe : avant de."],
+["conn","The project was finished early, ___ the client was very pleased.","so",["but","although","unless"],"Conséquence : « so »."],
+["conn","Ms. {L} speaks ___ French and Spanish fluently.","both",["either","neither","whether"],"« both ... and ... »."],
+["conn","Customers can pay ___ by cash or by credit card.","either",["both","neither","whether"],"« either ... or ... »."],
+["conn","___ the report is finished, I will send it to you.","As soon as",["Despite","During","Because of"],"« As soon as » + sujet + verbe."],
+["conn","The office will remain open ___ the renovation is completed.","until",["by","during","despite"],"« until » + proposition = jusqu'à ce que."],
+["conn","We need to order more paper ___ we run out.","before",["so that","although","during"],"« before » + sujet + verbe."],
+["pron","Mr. {L} asked his assistant to send the files to ___ by e-mail.","him",["he","his","he's"],"Après une préposition (« to »), pronom complément."],
+["pron","The candidate ___ we interviewed yesterday has excellent references.","whom",["which","whose","what"],"Personne + complément : « whom » (ou « who »)."],
+["pron","Ms. {L} completed the project by ___.","herself",["her","hers","she"],"« by herself » = toute seule."],
+["pron","{CO}, ___ headquarters is in {CITY}, employs 500 people.","whose",["who","which","where"],"« whose » + nom = dont le/la."],
+["pron","Employees ___ want to attend the workshop should register by {DAY}.","who",["which","whom","whose"],"Personne sujet du verbe « want » : « who »."],
+["pron","This is the office ___ I used to work.","where",["which","who","what"],"Lieu : « where »."],
+["pron","Please keep your belongings with ___ at all times.","you",["your","yours","yourselves"],"Après « with », pronom complément."],
+["pron","The new manager introduced ___ to the team on Monday.","herself",["her","hers","she"],"Introduce + soi-même : pronom réfléchi."],
+["pron","Our prices are lower than ___ of our competitors.","those",["that","them","these"],"« those of » remplace un nom pluriel (« the prices »)."],
+["pron","{CO} and ___ partners signed the agreement last week.","its",["it's","it","itself"],"Possessif d'une entreprise : « its » (sans apostrophe)."],
+["verbe","Mr. {L} decided ___ the job offer from {CO}.","to accept",["accepting","accept","accepted"],"« decide » + to + verbe."],
+["verbe","Would you mind ___ the window?","closing",["to close","close","closed"],"« mind » + verbe en -ing."],
+["verbe","The manager suggested ___ the meeting until next week.","postponing",["to postpone","postpone","postponed"],"« suggest » + verbe en -ing."],
+["verbe","We look forward to ___ you at the conference.","seeing",["see","saw","be seen"],"« look forward to » + verbe en -ing."],
+["verbe","Ms. {L} plans ___ a new branch in {CITY}.","to open",["opening","opens","opened"],"« plan » + to + verbe."],
+["verbe","The company avoids ___ prices during the holiday season.","raising",["to raise","raise","raised"],"« avoid » + verbe en -ing."],
+["verbe","Employees are encouraged ___ public transportation.","to use",["using","use","used"],"« be encouraged » + to + verbe."],
+["verbe","Before ___ the building, please return your visitor badge.","leaving",["leave","to leave","left"],"Après une préposition (« before »), verbe en -ing."],
+["verbe","The director agreed ___ the budget for the project.","to increase",["increasing","increase","increased"],"« agree » + to + verbe."],
+["verbe","Thank you for ___ our survey.","completing",["complete","to complete","completed"],"Après « for », verbe en -ing."],
+["verbe","Mr. {L} is interested in ___ the marketing team.","joining",["join","to join","joined"],"Après « in », verbe en -ing."],
+["verbe","The new system will allow us ___ orders faster.","to process",["processing","process","processed"],"« allow someone » + to + verbe."],
+["comp","This year's sales are ___ than last year's.","higher",["high","highest","more high"],"« than » : comparatif ; adjectif court + -er."],
+["comp","{CO} offers the ___ prices in the city.","lowest",["lower","low","most low"],"« the ... in » : superlatif."],
+["comp","The new model is ___ expensive than the old one.","less",["least","little","fewer"],"« less + adjectif + than »."],
+["comp","Please send the report as ___ as possible.","soon",["sooner","soonest","more soon"],"« as + adjectif/adverbe + as »."],
+["comp","The second hotel was much ___ to the airport.","closer",["close","closest","more closely"],"« much » + comparatif."],
+["comp","Of all the candidates, Ms. {L} is the ___ qualified.","most",["more","much","very"],"« Of all ... the most » : superlatif."],
+["comp","Our new office is twice as ___ as the old one.","large",["larger","largest","largely"],"« twice as + adjectif + as »."],
+["comp","The ___ we finish the report, the sooner we can leave.","faster",["fast","fastest","more fast"],"« The + comparatif ..., the + comparatif ... »."],
+["comp","There are ___ employees in the office today than yesterday.","fewer",["less","little","least"],"« fewer » + nom dénombrable pluriel."],
+["passif","The new product ___ at the trade fair next month.","will be presented",["will present","presents","presenting"],"Le produit ne présente pas : passif au futur."],
+["passif","All visitors ___ to sign in at the front desk.","are required",["require","requiring","have required"],"Les visiteurs sont obligés : passif."],
+["passif","The report ___ by the marketing team last week.","was written",["wrote","has written","writes"],"« by the marketing team » : passif au prétérit."],
+["passif","Ms. {L} ___ for her excellent work with clients.","was recognized",["recognized","recognizing","recognizes"],"Elle a été récompensée : passif."],
+["passif","The parking lot ___ repaved this weekend.","will be",["will","has","was being"],"« this weekend » (futur) + passif : « will be + participe »."],
+["passif","The meeting room has already ___ for {DAY}.","been reserved",["reserved","reserving","reserve"],"Present perfect passif : « has been + participe »."],
+["passif","Customers ___ by e-mail when their orders are shipped.","are notified",["notify","notifying","have notified"],"Les clients sont prévenus : passif."],
+["passif","The building ___ in 1920 and renovated in 2015.","was built",["built","has built","is building"],"Date passée + passif."],
+["passif","Your application ___ carefully by our team.","will be reviewed",["will review","reviews","reviewing"],"« by our team » : passif."],
+["vocab","Please ___ the attached form and return it by {DAY}.","complete",["achieve","perform","succeed"],"« complete a form » = remplir un formulaire."],
+["vocab","The flight was ___ because of bad weather.","delayed",["extended","retired","declined"],"« delayed » = retardé."],
+["vocab","Our company offers a wide ___ of products.","range",["scale","level","field"],"« a wide range of » = un large choix de."],
+["vocab","The hotel is ___ for its excellent service.","known",["aware","informed","familiar"],"« be known for » = être connu pour."],
+["vocab","Please ___ to the manual for detailed instructions.","refer",["look","see","read"],"« refer to » = se reporter à."],
+["vocab","The new employee is still ___ to the company's procedures.","adjusting",["applying","arranging","attaching"],"« adjust to » = s'adapter à."],
+["vocab","The store will ___ its hours during the holiday season.","extend",["grow","rise","spread"],"« extend hours » = élargir les horaires."],
+["vocab","All travel expenses must be ___ by a manager.","approved",["agreed","proved","applied"],"« approved by » = approuvé par."],
+["vocab","The company plans to ___ twenty new employees this year.","hire",["rent","lease","charge"],"« hire » = embaucher (« rent » = louer)."],
+["vocab","Concert tickets are ___ only on our Web site.","available",["possible","capable","able"],"« available » = disponible."],
+["vocab","We apologize for any ___ this may cause.","inconvenience",["impatience","indifference","insistence"],"Formule figée d'excuse."],
+["vocab","Mr. {L} has ___ experience in international sales.","extensive",["expensive","extended","exceeding"],"« extensive experience » = grande expérience."],
+["vocab","The ___ for the marketing position is {DAY}.","deadline",["timeline","headline","guideline"],"« deadline » = date limite."],
+["vocab","Please keep your ___ in case you need to return the item.","receipt",["recipe","reception","receiver"],"« receipt » = ticket de caisse (« recipe » = recette)."],
+["vocab","The manager asked all staff to ___ the safety meeting.","attend",["assist","join in","present"],"« attend a meeting » = assister à (« assist » = aider : faux ami)."]
+];
+function genP5(r,tag){
+  const pool=tag?P5B.filter(x=>x[0]===tag):P5B;
+  const it=r.draw("p5"+(tag||""),pool),c=ctx(r);
+  return {p:"5",qs:[mkQ(r,fill(it[1],c),it[2],it[3],"p5_"+it[0],fill(it[4],c))]};
+}
+/* ===== PARTIE 6 : textes à compléter ===== blancs [[0]]..[[3]] ; chaque blanc : [tag, bonne, [pièges], explication] */
+const P6T=[
+{h:`<p><b>To:</b> All staff<br><b>From:</b> {F} {L}, Office Manager<br><b>Subject:</b> New office hours</p><p>Starting {MONTH} 1, our office will be open from 7:30 A.M. to 6:00 P.M. This change [[0]] so that we can better serve our clients in other time zones. Employees may choose to start [[1]] workday between 7:30 and 9:30 A.M. [[2]] Please discuss your preferred schedule with your supervisor [[3]] the end of this month.</p>`,
+ b:[["passif","is being made",["makes","made","making"],"Le changement est fait (par quelqu'un) : passif."],["pron","their",["they","them","theirs"],"Devant un nom (« workday »), adjectif possessif."],["phrase","However, all employees must still work eight hours per day.",["The cafeteria serves breakfast every morning.","Our clients are very satisfied with the new product.","The office was renovated last year."],"La phrase précise la règle juste après la liberté de choisir son horaire."],["prep","before",["during","while","since"],"« before the end of » = avant la fin de."]]},
+{h:`<p><b>{REST}</b> is proud to announce the opening of our second location on {STREET} Street. The new restaurant [[0]] the same delicious dishes as our original location, as well as several new items. [[1]] To celebrate, all customers will receive a free dessert [[2]] the first week. Reservations are [[3]] recommended, as we expect to be very busy.</p>`,
+ b:[["temps","will offer",["offered","has offered","offering"],"Le restaurant n'est pas encore ouvert : futur."],["phrase","Our chef has created a special menu for the occasion.",["The restaurant closed after only one year.","Please return the form with your payment.","Your package will be delivered tomorrow."],"La phrase prolonge l'idée des nouveaux plats."],["prep","during",["while","among","between"],"« during » + nom (« the first week »)."],["forme","strongly",["strong","strength","stronger"],"Un adverbe modifie « recommended »."]]},
+{h:`<p>Dear {M} {L},</p><p>Thank you for being a [[0]] reader of <i>Business Monthly</i>. Your subscription will expire on {MONTH} 30. To continue receiving the magazine without interruption, please renew [[1]] {MONTH} 15. [[2]] Subscribers who renew early will also receive a free copy of our annual guide. We hope you will continue [[3]] our magazine.</p><p>Sincerely,<br>{F} {L2}, Customer Service</p>`,
+ b:[["forme","loyal",["loyalty","loyally","loyalties"],"Entre « a » et le nom « reader », il faut un adjectif."],["prep","by",["until","since","at"],"« by » + date limite."],["phrase","You can renew online or by calling our customer service line.",["The magazine was first published in 1990.","We are sorry that your order was damaged.","The position has already been filled."],"La phrase explique comment renouveler."],["verbe","to enjoy",["enjoyed","enjoy","enjoyment"],"« continue » + to + verbe (ou -ing)."]]},
+{h:`<p><b>To all employees:</b></p><p>The east parking lot [[0]] from {MONTH} 3 to {MONTH} 7 for repairs. During this time, employees should park in the visitors' lot [[1]] the main entrance. [[2]] We understand that this may be inconvenient, and we appreciate your [[3]].</p><p>— Facilities Department</p>`,
+ b:[["passif","will be closed",["closed","has closed","closing"],"Dates futures + le parking est fermé (par quelqu'un) : passif au futur."],["prep","across from",["among","along with","onto"],"« across from » = en face de."],["phrase","A shuttle bus will run every ten minutes between the lot and the building.",["The new cafeteria menu will be available soon.","Employees received their bonuses last month.","The parking lot was built in 1995."],"La phrase donne une solution pratique liée au stationnement."],["forme","patience",["patient","patiently","patients"],"Après « your », il faut un nom ; « patients » = des malades (piège)."]]},
+{h:`<p><b>Accountant wanted</b></p><p>{CO} is looking for an experienced accountant to join our team in {CITY}. The successful candidate [[0]] responsible for preparing monthly financial reports. Applicants must have at least five years of experience and a [[1]] knowledge of accounting software. [[2]] To apply, send your résumé to our human resources department [[3]] {MONTH} 20.</p>`,
+ b:[["temps","will be",["has been","was","being"],"Le candidat n'est pas encore choisi : futur."],["forme","thorough",["thoroughly","thoroughness","through"],"Devant le nom « knowledge », il faut un adjectif."],["phrase","Knowledge of a second language is an advantage.",["Our offices will be closed on Monday.","Thank you for your recent purchase.","The workshop was canceled due to rain."],"La phrase continue la liste des qualifications."],["prep","no later than",["until","while","since"],"« no later than » + date = au plus tard le."]]},
+{h:`<p><b>Product safety notice</b></p><p>{CO} has discovered a problem with some of the electric heaters sold between {MONTH} and {MONTH2}. The power cable may overheat [[0]] the heater is used for long periods. [[1]], we are asking customers to stop using the product immediately. [[2]] Customers can return the heater to any of our stores for a full refund, [[3]] they have a receipt or not.</p>`,
+ b:[["conn","when",["during","despite","because of"],"« when » + sujet + verbe."],["conn","For this reason",["In contrast","Otherwise","Even so"],"Lien de cause à conséquence."],["phrase","No injuries have been reported so far.",["Our stores are hiring for the holiday season.","Please print your boarding pass before arriving.","The product won an award for its design."],"La phrase reste sur la sécurité du produit."],["conn","whether",["either","unless","although"],"« whether ... or not » = que ... ou non."]]},
+{h:`<p>Dear Ms. {L},</p><p>Thank you for meeting with me yesterday. I enjoyed [[0]] about your plans for the new store. As we discussed, I [[1]] you a detailed cost estimate by the end of next week. [[2]] In the meantime, please do not hesitate to contact me [[3]] you have any questions.</p><p>Best regards,<br>{M} {L2}</p>`,
+ b:[["verbe","learning",["to learn","learn","learned"],"« enjoy » + verbe en -ing."],["temps","will send",["sent","have sent","sending"],"« by the end of next week » : futur."],["phrase","It will include the price of materials and labor.",["Our store opened in 1985.","I am sorry I could not attend the meeting.","The weather was very nice yesterday."],"« It » renvoie au devis mentionné juste avant."],["conn","if",["unless","whether","although"],"« if you have any questions » = si vous avez des questions."]]},
+{h:`<p><b>Annual book sale</b></p><p>The {CITY} Public Library will hold its annual book sale on {DAY}, {MONTH} 18. More than 5,000 used books [[0]] at prices starting at one dollar. All [[1]] from the sale will be used to buy new computers for the library. [[2]] Volunteers are still needed to help set up tables; those [[3]] are interested should contact the library.</p>`,
+ b:[["passif","will be sold",["will sell","sold","selling"],"Les livres sont vendus (par la bibliothèque) : passif au futur."],["vocab","proceeds",["proceed","proceeding","processed"],"« proceeds » = recettes, bénéfices d'une vente."],["phrase","Last year's sale raised over $10,000.",["The museum's new exhibit opens next week.","Tickets for the concert are sold out.","The new computers were installed last year."],"La phrase reste sur la vente et l'argent récolté."],["pron","who",["which","whom","whose"],"Personnes sujet de « are interested » : « who »."]]},
+{h:`<p>Dear Guests,</p><p>We are pleased to inform you that our fitness center has been [[0]] renovated. It now features new equipment and a larger swimming pool. The center is open daily from 6 A.M. to 10 P.M. and is free for all hotel guests. [[1]], towels are provided at the front desk of the center. [[2]] Children under 14 must be [[3]] by an adult at all times.</p><p>— {HOTEL} Management</p>`,
+ b:[["forme","completely",["complete","completion","completed"],"Un adverbe modifie le participe « renovated »."],["conn","In addition",["Instead","Otherwise","Nevertheless"],"Ajout d'une information : « In addition »."],["phrase","Please remember to bring your room key to enter.",["Check-out time has been changed to noon.","Our restaurant received an award last year.","Thank you for your order."],"La phrase reste sur l'accès à la salle de sport."],["passif","accompanied",["accompany","accompanying","accompaniment"],"« must be + participe passé » : passif."]]},
+{h:`<p>Dear Valued Customer,</p><p>Due to the rising cost of raw materials, we must [[0]] our prices by 5 percent starting {MONTH} 1. This is the first price change in three years. [[1]] Orders placed [[2]] the end of this month will still be charged at the current prices. We thank you for your continued [[3]].</p><p>{CO}</p>`,
+ b:[["vocab","raise",["rise","arise","raised"],"« raise » (transitif) = augmenter quelque chose ; « rise » n'a pas de complément."],["phrase","We have worked hard to keep our prices low during this time.",["Our new store is located downtown.","Your order has been shipped.","Please confirm your attendance at the dinner."],"La phrase justifie la hausse après « first change in three years »."],["prep","before",["since","during","among"],"« before the end of » = avant la fin de."],["forme","support",["supporter","supportive","supported"],"Après l'adjectif « continued », il faut un nom."]]},
+{h:`<p><b>IT notice</b></p><p>Please note that the company's e-mail system will be [[0]] for maintenance this Saturday from 10 P.M. to 2 A.M. During this period, you will not be able to send or receive messages. [[1]] We recommend that you save your work [[2]] the maintenance begins. If you experience any problems after the update, please contact the IT help desk [[3]].</p>`,
+ b:[["forme","unavailable",["unavailability","availably","avail"],"Après « will be », adjectif attribut."],["phrase","Messages sent to you during this time will be delivered afterward.",["The new printers will arrive on Monday.","Our sales increased last quarter.","Please submit your vacation requests early."],"La phrase rassure sur les messages pendant la coupure."],["prep","before",["during","despite","between"],"« before » + sujet + verbe."],["forme","immediately",["immediate","immediacy","more immediate"],"Un adverbe modifie « contact »."]]},
+{h:`<p>Dear Colleagues,</p><p>You are invited to our annual awards dinner, which [[0]] place at the {HOTEL} on {DAY}, {MONTH} 9. The evening will begin with a reception at 6:30 P.M., [[1]] by dinner and the award ceremony. [[2]] Please let me know [[3]] you will attend by {MONTH} 1.</p><p>{F} {L}, Events Committee</p>`,
+ b:[["temps","will take",["took","has taken","taking"],"Événement à venir : futur."],["passif","followed",["follows","follow","to follow"],"« followed by » = suivi de."],["phrase","This year, we will honor employees who have shown outstanding leadership.",["The hotel is currently closed for repairs.","Your parking permit has expired.","The training manual is attached."],"La phrase présente la cérémonie de remise de prix."],["conn","whether",["unless","either","despite"],"« let me know whether » = dites-moi si."]]}
+];
+function genP6(r){
+  const t=r.draw("p6",P6T),c=ctx(r);
+  return {p:"6",doc:fill(t.h,c),qs:t.b.map(b=>mkQ(r,b[0]==="phrase"?"Choisis la phrase qui convient.":"Choisis le mot qui convient.",fill(b[1],c),b[2].map(x=>fill(x,c)),"p6_"+b[0],fill(b[3],c)))};
+}
+const P6TAG={phrase:"Phrase à insérer",forme:"Nature des mots",temps:"Temps",prep:"Prépositions",conn:"Connecteurs",pron:"Pronoms",verbe:"Gérondif / infinitif",passif:"Passif",vocab:"Vocabulaire"};
+
+/* ===== PARTIE 7 : lecture de documents ===== tags : gen, det, inf, vocab, not, cross */
+const P7TAG={gen:"Idée principale / but",det:"Détail précis",inf:"Déduction",vocab:"Sens d'un mot",not:"Question NOT (ce qui n'est pas dit)",cross:"Croiser plusieurs documents",intent:"Intention d'un message"};
+const em=(from,to,subj,body,date)=>`<div class="mail"><div class="mh"><b>From:</b> ${from}<br><b>To:</b> ${to}<br>${date?`<b>Date:</b> ${date}<br>`:""}<b>Subject:</b> ${subj}</div>${body}</div>`;
+const P7S=[
+(c,r)=>({docs:[{t:"E-mail",h:em(`${c.F} ${c.L}`,"All staff","Kitchen renovation",`<p>The second-floor kitchen will be closed from ${c.D1} to ${c.D2} while new appliances are installed. During this time, please use the kitchen on the fourth floor.</p><p>The new kitchen will include a larger refrigerator and two coffee machines. Please remove all personal items from the refrigerator by ${c.D0} evening. Anything left inside will be thrown away.</p><p>Thank you,<br>${c.F} ${c.L}, Facilities</p>`)}],Q:[
+["What is the purpose of the e-mail?","To announce a temporary closure",["To introduce a new employee","To ask for volunteers","To change a meeting time"],"gen"],
+["What will the renovated kitchen have?","Two coffee machines",["A new dishwasher","More tables","A microwave oven"],"det"],
+[`What are employees asked to do by ${c.D0} evening?`,"Empty the refrigerator",["Order new appliances","Clean the fourth-floor kitchen","Sign up for a schedule"],"det"]]}),
+(c,r)=>({docs:[{t:"Job posting",h:`<div class="ad"><h4>Part-time sales assistant</h4><p><b>${c.CO.split(" ")[0]} Outdoor Store, ${c.CITY}</b></p><p>We are looking for a friendly sales assistant to work 20 hours per week, including weekends.</p><p><b>Responsibilities:</b> helping customers, restocking shelves, operating the cash register.</p><p><b>Requirements:</b> at least one year of retail experience; ability to lift boxes of up to 20 kg.</p><p><b>We offer:</b> a flexible schedule and a 15% employee discount.</p><p>To apply, visit the store and ask for ${c.M} ${c.L}, the store manager.</p></div>`}],Q:[
+["What is a requirement for the position?","Previous experience in a store",["A university degree","A driver's license","Knowledge of a foreign language"],"det"],
+["What benefit is mentioned?","A discount on purchases",["Free meals","Health insurance","A yearly bonus"],"det"],
+["How should people apply for the job?","By going to the store in person",["By sending an e-mail","By calling the manager","By filling out a form online"],"det"],
+["The word \"operating\" in the posting is closest in meaning to","using",["repairing","opening","buying"],"vocab"]]}),
+(c,r)=>({docs:[{t:"Text messages",h:`<div class="chat"><p><b>${c.M} (9:12 A.M.)</b> Hi ${c.F}, my train is stuck between two stations. I'll be at least 30 minutes late.</p><p><b>${c.F} (9:14 A.M.)</b> No problem. The clients from ${c.CO2} haven't arrived yet either.</p><p><b>${c.M} (9:15 A.M.)</b> Could you start the presentation without me? The slides are on the shared drive.</p><p><b>${c.F} (9:16 A.M.)</b> Sure. I'll begin with the sales figures.</p><p><b>${c.M} (9:17 A.M.)</b> Perfect. You're a lifesaver.</p></div>`}],Q:[
+[`Why will ${c.M} be late?`,"His train has stopped.",["He missed a bus.","He is stuck in traffic.","He forgot some documents."],"det"],
+[`At 9:17 A.M., what does ${c.M} most likely mean when he writes, "You're a lifesaver"?`,"He is grateful for her help.",["He thinks she is in danger.","He wants her to call a doctor.","He is surprised by the news."],"intent"],
+[`What will ${c.F} present first?`,"Sales figures",["A new product","The company history","A budget plan"],"det"]]}),
+(c,r)=>{const p=r.int(3,6)*10,ink=r.int(4,9)*5,ch=r.int(9,15)*10;const tot=p+ink+2*ch;return{docs:[{t:"Invoice",h:`<div class="inv"><h4>Summit Office Supplies — Invoice #${c.NUM}</h4><p>Customer: ${c.CO2}</p><table><tr><td>Printer paper (10 boxes)</td><td class="n">$${p}.00</td></tr><tr><td>Ink cartridges (6)</td><td class="n">$${ink}.00</td></tr><tr><td>Desk chairs (2)</td><td class="n">$${2*ch}.00</td></tr><tr><td>Delivery</td><td class="n">$0.00</td></tr><tr><td><b>Total</b></td><td class="n"><b>$${tot}.00</b></td></tr></table><p>Delivery is free for orders over $200. Payment is due within 30 days.</p><p><i>Note: The desk chairs are currently out of stock and will be shipped separately on ${c.MONTH} 12.</i></p></div>`}],Q:[
+["What is indicated about the delivery?","It was free of charge.",["It was late.","It required a signature.","It cost $20."],"det"],
+["Which items will arrive later?","The desk chairs",["The printer paper","The ink cartridges","All of the items"],"det"],
+["How much did the customer spend on paper?",`$${p}.00`,[`$${ink}.00`,`$${2*ch}.00`,`$${tot}.00`,`$${p+10}.00`],"det"]]}},
+(c,r)=>{const d=r.int(3,27);return{docs:[{t:"Notice",h:`<div class="ad"><h4>Notice to tenants: elevator inspection</h4><p>The elevators in the ${c.STREET} Tower will be inspected on ${c.DAY}, ${c.MONTH} ${d}, from 8 A.M. to 12 P.M. Only one elevator will be in service at a time.</p><p>Tenants who are expecting large deliveries that morning should contact the management office to reserve the freight elevator.</p><p>We apologize for any inconvenience.<br>— ${c.CO2.split(" ")[0]} Property Management</p></div>`}],Q:[
+["What will happen in the building?","Elevators will be inspected.",["Offices will be painted.","The heating will be turned off.","The lobby will be closed."],"gen"],
+["Who should contact the management office?","Tenants expecting deliveries",["Tenants who are moving out","New tenants","Tenants with parking permits"],"det"],
+["The phrase \"in service\" is closest in meaning to","working",["being repaired","helpful","for sale"],"vocab"]]}},
+(c,r)=>({docs:[{t:"Article",h:`<div class="art"><h4>${c.CO} to move headquarters</h4><p><b>${c.CITY}</b> — ${c.CO} announced on ${c.DAY} that it will move its headquarters to a new building downtown next spring. The building will have room for 800 employees, nearly twice as many as the current offices.</p><p>"We are growing quickly, and our current space is simply too small," said CEO ${c.F} ${c.L}. The company also plans to hire 200 new staff members over the next year, mostly in customer service and technology. The old building will be sold.</p></div>`}],Q:[
+["What is the article mainly about?","A company's relocation",["A new product","A change of CEO","A decline in sales"],"gen"],
+["Why is the company moving?","Its current offices are too small.",["Its rent has increased.","Its employees asked for it.","Its building is being sold by the owner."],"det"],
+["What is NOT mentioned in the article?","The cost of the new building",["The number of people the new building can hold","Plans to hire new staff","What will happen to the old building"],"not"]]}),
+(c,r)=>({docs:[{t:"Web page",h:`<div class="ad"><h4>${c.CITY} Community College — Evening courses</h4><table><tr><td><b>Business Writing</b><br>Tuesdays, 6–8 P.M., 8 weeks</td><td class="n">$240</td></tr><tr><td><b>Introduction to Accounting</b><br>Thursdays, 6–9 P.M., 10 weeks</td><td class="n">$320</td></tr><tr><td><b>Spanish for Beginners</b><br>Mondays, 7–9 P.M., 6 weeks</td><td class="n">$200</td></tr></table><p>Register online by ${c.MONTH} 5. Students who register for two courses receive a 10% discount.</p></div>`}],Q:[
+["Which course lasts the most weeks?","Introduction to Accounting",["Business Writing","Spanish for Beginners","All courses last the same time"],"det"],
+["How can students get a discount?","By taking two courses",["By registering early","By paying in cash","By being a college employee"],"det"],
+["What is true about the Business Writing course?","It meets on Tuesdays.",["It is the cheapest course.","It lasts three hours per session.","It is taught online."],"det"]]}),
+(c,r)=>({docs:[{t:"Memo",h:`<div class="mail"><div class="mh"><b>MEMO</b><br><b>To:</b> All employees<br><b>From:</b> ${c.F} ${c.L}, Human Resources<br><b>Re:</b> Updated travel policy</div><p>Effective ${c.MONTH} 1, employees traveling on business must book flights through our online travel system rather than directly with airlines. This will help us obtain lower group rates.</p><p>Hotel rooms can still be booked independently, but the cost must not exceed $150 per night. Receipts for all expenses should be submitted within two weeks of returning.</p></div>`}],Q:[
+["What is the purpose of the memo?","To explain a change in a policy",["To announce a business trip","To introduce a new airline","To request expense receipts"],"gen"],
+["How must employees book flights?","Through a company system",["Through a travel agent","Directly with airlines","Through their manager"],"det"],
+["What is stated about hotels?","There is a maximum price per night.",["They must be booked by HR.","Only certain hotels are allowed.","They will be paid in advance."],"det"]]}),
+(c,r)=>({docs:[{t:"Schedule",h:`<div class="ad"><h4>Business Forum — Day 1 program</h4><table><tr><td>9:00</td><td>Registration and coffee (Lobby)</td></tr><tr><td>9:30</td><td>Welcome speech — ${c.F} ${c.L}, Forum President</td></tr><tr><td>10:00</td><td>Keynote: "Growing in a digital world" — Dr. ${c.M} ${c.L2}</td></tr><tr><td>11:30</td><td>Panel discussion (Room B)</td></tr><tr><td>12:30</td><td>Lunch (Garden Terrace)</td></tr><tr><td>2:00</td><td>Workshops (Rooms C–E)</td></tr></table><p><i>Note: Because of construction work, the Garden Terrace may be closed. In that case, lunch will be served in Room A.</i></p></div>`}],Q:[
+["Who will give the welcome speech?",`${c.F} ${c.L}`,[`Dr. ${c.M} ${c.L2}`,"A panel of experts","The workshop leaders"],"det"],
+["Where will coffee be served?","In the lobby",["In Room A","In Room B","On the Garden Terrace"],"det"],
+["What is indicated about lunch?","Its location may change.",["It is not included.","It will start late.","It must be reserved in advance."],"inf"]]}),
+(c,r)=>({docs:[{t:"Letter",h:`<div class="mail"><p>Dear Mr. ${c.L},</p><p>Thank you for your letter of ${c.MONTH} 3 regarding the delayed delivery of your sofa. We sincerely apologize. The delay was caused by a problem with one of the machines at our factory, which has now been repaired.</p><p>Your sofa will be delivered on ${c.DAY} between 9 A.M. and 1 P.M. As a gesture of goodwill, we have refunded the $50 delivery charge to your credit card.</p><p>Sincerely,<br>${c.F} ${c.L2}<br>Customer Relations Manager, ${c.STREET} Furniture</p></div>`}],Q:[
+["Why was the letter written?","To respond to a complaint",["To advertise a new sofa","To request a payment","To confirm an order"],"gen"],
+["What caused the delay?","A problem at a factory",["A mistake in the address","Bad weather","A lack of drivers"],"det"],
+["What has the company done for Mr. "+c.L+"?","Refunded a fee",["Sent a free gift","Offered a new sofa","Given a store credit"],"det"]]}),
+(c,r)=>({docs:[{t:"Online chat",h:`<div class="chat"><p><b>${c.F} (2:01 P.M.)</b> Hello, I'd like to change the delivery address for my order #${c.NUM}.</p><p><b>${c.M}, Agent (2:02 P.M.)</b> Sure. Has the order shipped yet?</p><p><b>${c.F} (2:03 P.M.)</b> The confirmation says it ships tomorrow.</p><p><b>${c.M}, Agent (2:05 P.M.)</b> Then I can update it. What is the new address?</p><p><b>${c.F} (2:06 P.M.)</b> 45 ${c.STREET} Avenue. It's my office.</p><p><b>${c.M}, Agent (2:07 P.M.)</b> Done. You'll receive a confirmation e-mail shortly.</p><p><b>${c.F} (2:07 P.M.)</b> That was fast!</p></div>`}],Q:[
+[`Why did ${c.F} contact the company?`,"To change a delivery address",["To cancel an order","To complain about a product","To ask for a refund"],"gen"],
+["What is true about the order?","It has not been shipped yet.",["It was delivered to her home.","It was damaged.","It will arrive today."],"det"],
+[`At 2:07 P.M., what does ${c.F} mean when she writes, "That was fast!"?`,"She is pleased with the quick service.",["She thinks the delivery is too early.","She wants to speak to a manager.","She did not receive an e-mail."],"intent"]]}),
+(c,r)=>({docs:[{t:"Advertisement",h:`<div class="ad"><h4>${c.STREET} Home &amp; Garden — Spring Sale!</h4><p><b>20% off all garden furniture</b>, ${c.MONTH} 1–15.</p><p>Free delivery on purchases over $500.</p><p>Offer valid at all locations except our airport store. Bring this coupon to the register or enter the code SPRING20 online.</p></div>`}],Q:[
+["What is on sale?","Garden furniture",["Kitchen appliances","Clothing","Office supplies"],"det"],
+["What is indicated about the airport store?","It does not offer the discount.",["It is closing.","It has the largest selection.","It offers free delivery."],"det"],
+["How can customers receive free delivery?","By spending more than $500",["By using a code","By visiting before the 15th","By ordering online"],"det"]]})
+];
+/* documents multiples : 5 questions, dont au moins une à croiser */
+const P7M=[
+(c,r)=>({docs:[{t:"Advertisement",h:`<div class="ad"><h4>Event coordinator — ${c.HOTEL}</h4><p>We are looking for an event coordinator to plan conferences and weddings.</p><p><b>Requirements:</b> two years of experience in event planning; fluency in English and one other language; availability on weekends.</p><p>Send your résumé to ${c.F} ${c.L} by ${c.MONTH} 15.</p></div>`},{t:"E-mail",h:em(`${c.M} ${c.L2}`,`${c.F} ${c.L}`,"Event coordinator position",`<p>Dear Ms. ${c.L},</p><p>I am writing to apply for the event coordinator position advertised on your Web site. I have worked for three years at the ${c.CITY} Convention Center, where I organized more than 50 conferences. I speak English and Japanese.</p><p>Please note that I am currently taking an evening course on Sundays, so I am only available on Saturdays until the course ends in ${c.MONTH2}.</p><p>Sincerely,<br>${c.M} ${c.L2}</p>`)}],Q:[
+["What is a requirement for the job?","Being available on weekends",["Having a hotel management degree","Living near the hotel","Owning a car"],"det"],
+[`Where did ${c.M} learn about the position?`,"On a Web site",["In a newspaper","From a friend","At a job fair"],"det"],
+[`What does ${c.M} say about his experience?`,"He has organized many conferences.",["He has planned weddings.","He has worked in a hotel.","He has managed a team."],"det"],
+[`Which requirement may ${c.M} not fully meet at the moment?`,"Weekend availability",["Event-planning experience","Language skills","The application deadline"],"cross"],
+["What other language does the applicant speak?","Japanese",["Spanish","French","Chinese"],"det"]]}),
+(c,r)=>{const n=r.pick([3,4,5]);return{docs:[{t:"Booking confirmation",h:`<div class="inv"><h4>${c.HOTEL} — Booking confirmation</h4><table><tr><td>Guest</td><td>${c.F} ${c.L}</td></tr><tr><td>Check-in</td><td>${c.MONTH} 10</td></tr><tr><td>Nights</td><td>${n}</td></tr><tr><td>Room</td><td>Deluxe, $180 per night</td></tr><tr><td>Parking</td><td>$20 per day</td></tr></table><p>Free cancellation or changes until 48 hours before arrival.</p></div>`},{t:"E-mail",h:em(`${c.F} ${c.L}`,"reservations@hotel","My booking",`<p>Hello,</p><p>Because of a change in my meeting schedule, I will arrive one day later than planned, on ${c.MONTH} 11. My departure date stays the same.</p><p>Also, I will be coming by train, so I will not need a parking space. Could you please update my reservation?</p><p>Thank you,<br>${c.F} ${c.L}</p>`)}],Q:[
+["How much does the room cost per night?","$180",["$20","$150","$200"],"det"],
+[`Why did ${c.F} write the e-mail?`,"To change her reservation",["To cancel her stay","To complain about her room","To ask about prices"],"gen"],
+[`How many nights will ${c.F} now stay at the hotel?`,`${n-1}`,[`${n}`,`${n+1}`,`${n-2}`],"cross"],
+[`What will ${c.F} no longer need?`,"A parking space",["A deluxe room","Breakfast","A train ticket"],"det"],
+["What is suggested about the change she requests?","It can be made without a fee.",["It costs $20.","It must be made by phone.","It is not possible."],"cross"]]}},
+(c,r)=>{const n=r.pick([12,15,18]);return{docs:[{t:"Web page",h:`<div class="ad"><h4>${c.REST} Catering</h4><table><tr><td>Breakfast package (pastries, fruit, coffee)</td><td class="n">$12 / person</td></tr><tr><td>Lunch package (sandwiches, salad, drinks)</td><td class="n">$18 / person</td></tr><tr><td>Deluxe lunch (hot dishes, salad, dessert, drinks)</td><td class="n">$25 / person</td></tr></table><p>Free delivery for orders of 20 people or more. Otherwise, a $30 delivery fee applies.</p></div>`},{t:"Order form",h:`<div class="inv"><h4>Order form</h4><table><tr><td>Customer</td><td>${c.F} ${c.L}, ${c.CO}</td></tr><tr><td>Date</td><td>${c.DAY}, ${c.MONTH} 14</td></tr><tr><td>Package</td><td>Lunch package</td></tr><tr><td>Number of people</td><td>${n}</td></tr><tr><td>Delivery time</td><td>12:00 noon</td></tr></table></div>`},{t:"E-mail",h:em(`${c.F} ${c.L}`,`${c.REST} Catering`,"Yesterday's order",`<p>Hello,</p><p>Our lunch arrived at 12:30 instead of noon, so our meeting started late. Also, there were no desserts, although several of my colleagues had been looking forward to them.</p><p>I would appreciate it if you could look into this.</p><p>${c.F} ${c.L}</p>`)}],Q:[
+["What is included only in the deluxe lunch?","Dessert",["Salad","Drinks","Sandwiches"],"det"],
+[`For how many people did ${c.F} order?`,`${n}`,["20","25","30"],"det"],
+[`What problem does ${c.F} mention?`,"The food arrived late.",["The food was cold.","The order was too small.","The bill was wrong."],"det"],
+["Why were there no desserts?","They were not part of the package ordered.",["The restaurant forgot them.","They were sold out.","They were delivered later."],"cross"],
+[`What is suggested about ${c.F}'s order?`,"A delivery fee was charged.",["It was paid in advance.","It was canceled.","It included breakfast."],"cross"]]}},
+(c,r)=>({docs:[{t:"Schedule",h:`<div class="ad"><h4>${c.CITY} Small Business Fair — Workshops</h4><table><tr><td>10:00</td><td>Social media marketing — Room 1</td></tr><tr><td>11:30</td><td>Managing your finances — Room 2</td></tr><tr><td>2:00</td><td>Hiring your first employee — Room 1</td></tr><tr><td>3:30</td><td>Selling online — Room 3</td></tr></table></div>`},{t:"E-mail",h:em(`${c.F} ${c.L}`,"Fair organizers","Workshops",`<p>Hello,</p><p>I registered for the workshops on managing finances and selling online. However, I must leave the fair at 3:00 P.M. to catch my train. Is there any way I could attend the online sales workshop earlier?</p><p>${c.F} ${c.L}</p>`)},{t:"Notice",h:`<div class="ad"><h4>Schedule change</h4><p>Because the speaker is ill, the workshop "Hiring your first employee" has been moved to 4:30 P.M. As a result, "Selling online" will now begin at 2:00 P.M. in Room 3.</p></div>`}],Q:[
+["What is indicated about the fair?","It offers workshops on several topics.",["It lasts two days.","It is free.","It takes place online."],"gen"],
+["At what time is the finances workshop?","11:30",["10:00","2:00","3:30"],"det"],
+[`Why did ${c.F} write to the organizers?`,"She cannot stay until the end of the day.",["She wants a refund.","She lost her ticket.","She would like to give a talk."],"gen"],
+[`What is true about ${c.F}'s situation after the schedule change?`,"She can attend both of her workshops.",["She will miss the online sales workshop.","She must change rooms.","She will have to take a later train."],"cross"],
+["Why was a workshop moved?","A speaker was sick.",["A room was unavailable.","Too many people registered.","A train was late."],"det"]]}),
+(c,r)=>{const lib=9;return{docs:[{t:"Memo",h:`<div class="mail"><div class="mh"><b>MEMO</b><br><b>From:</b> ${c.F} ${c.L}, Human Resources<br><b>Re:</b> Volunteer Day, ${c.MONTH} 20</div><p>This year, employees can choose one of three activities: park cleanup (8 A.M.–12 P.M.), food bank (1–5 P.M.), or reading to children at the public library (10 A.M.–12 P.M.). Each activity is limited to 10 people. Participants will receive a paid day off. Please add your name to the sign-up sheet by ${c.MONTH} 10.</p></div>`},{t:"Sign-up sheet",h:`<div class="inv"><h4>Volunteer Day — sign-up (as of ${c.MONTH} 8)</h4><table><tr><td>Park cleanup</td><td class="n">10 names</td></tr><tr><td>Food bank</td><td class="n">6 names</td></tr><tr><td>Library reading</td><td class="n">${lib} names</td></tr></table></div>`}],Q:[
+["Who wrote the memo?","A human resources employee",["A library worker","A park manager","A food bank volunteer"],"det"],
+["What will participants receive?","A paid day off",["A free lunch","A T-shirt","A bonus"],"det"],
+["Which activity takes place in the afternoon?","Food bank",["Park cleanup","Library reading","All of them"],"det"],
+["Which activity can no longer accept volunteers?","Park cleanup",["Food bank","Library reading","None of them"],"cross"],
+["How many more people can sign up for the library activity?","One",["None","Four","Ten"],"cross"]]}},
+(c,r)=>({docs:[{t:"Price list",h:`<div class="ad"><h4>Peak Fitness — Membership plans</h4><table><tr><td><b>Basic</b> — gym access, 6 A.M.–10 P.M.</td><td class="n">$30 / month</td></tr><tr><td><b>Plus</b> — Basic + group classes</td><td class="n">$45 / month</td></tr><tr><td><b>Premium</b> — Plus + swimming pool + one personal training session per month</td><td class="n">$70 / month</td></tr></table></div>`},{t:"E-mail",h:em(`${c.F} ${c.L}`,"Peak Fitness","My membership",`<p>Hello,</p><p>I currently have the Plus membership, and I really enjoy the yoga classes. My doctor has recommended that I start swimming, so I would like to change my membership so that I can use the pool. Could you tell me how to do this?</p><p>${c.F} ${c.L}</p>`)}],Q:[
+["What does the Plus membership include?","Group classes",["A swimming pool","Personal training","24-hour access"],"det"],
+[`Why did ${c.F} write the e-mail?`,"To change her membership",["To cancel her membership","To complain about a class","To ask about opening hours"],"gen"],
+[`Which plan will ${c.F} most likely choose?`,"Premium",["Basic","Plus","She will keep her current plan"],"cross"],
+[`How much more will ${c.F} pay per month?`,"$25",["$15","$40","$70"],"cross"],
+["What is mentioned about the Basic plan?","It has limited hours.",["It includes one class per week.","It is only for students.","It requires a one-year contract."],"det"]]})
+];
+function genP7(r,multi){
+  const c=ctx(r),t=multi?r.draw("p7m",P7M)(c,r):r.draw("p7s",P7S)(c,r);
+  return {p:multi?"7m":"7s",docs:t.docs,qs:t.Q.map(q=>mkQ(r,q[0],q[1],q[2],"p7_"+q[3]))};
+}
+
+/* ===== APPLICATION ===== */
+const KEY="toeicTrainer.v1";
+const PARTS=["1","2","3","4","5","6","7s","7m"];
+const PN={"1":"Partie 1 · Photographies","2":"Partie 2 · Questions-réponses","3":"Partie 3 · Conversations","4":"Partie 4 · Exposés","5":"Partie 5 · Phrases incomplètes","6":"Partie 6 · Textes à compléter","7s":"Partie 7 · Textes simples","7m":"Partie 7 · Textes multiples"};
+const REAL={"1":6,"2":25,"3":39,"4":30,"5":30,"6":16,"7s":29,"7m":25};
+const EASE={"1":1,"2":.9,"5":.95,"6":.75,"3":.7,"4":.7,"7s":.6,"7m":.45};
+const isL=p=>p==="1"||p==="2"||p==="3"||p==="4";
+const P5ORD=["forme","temps","prep","conn","pron","verbe","comp","passif","vocab"];
+const EXD={"1":{n:15,k:20,g:genP1,min:15},"2":{n:15,k:25,g:genP2,min:15},"3":{n:20,k:10,g:genP3,min:30},"4":{n:20,k:10,g:genP4,min:30},"5":{n:20,k:30,min:25},"6":{n:15,k:6,g:genP6,min:25},"7s":{n:10,k:9,g:r=>genP7(r,false),min:30},"7m":{n:10,k:4,g:r=>genP7(r,true),min:30}};
+const METH={
+"1":{why:"Seulement 6 questions, mais ce sont les plus faciles du test.",how:["Avant l'audio, décris la photo dans ta tête : qui, quelle action, quels objets.","Élimine toute phrase qui cite un objet ou une personne absente de la photo.","Méfie-toi de « is being + participe » : l'action doit être en train de se faire."]},
+"2":{why:"25 questions très courtes : le premier mot de la question donne la réponse.",how:["Concentre-toi sur le premier mot : Where = lieu, When = moment, Who = personne.","Élimine les réponses qui répètent un mot de la question ou un mot qui sonne pareil.","Une réponse indirecte (« I'll check », « Ask Linda ») est souvent la bonne."]},
+"3":{why:"39 questions : c'est la plus grosse partie de l'écoute.",how:["Lis les 3 questions AVANT le début de la conversation.","La bonne réponse reformule l'audio ; une option qui reprend les mots exacts est souvent un piège.","Si tu rates une question, passe tout de suite à la suivante."]},
+"4":{why:"30 questions : un seul locuteur, et les mêmes types d'annonces reviennent.",how:["Lis les questions avant l'audio et repère le type de document (annonce, message vocal, publicité).","La 1re question porte souvent sur le but ou le lieu : écoute bien le début.","La dernière porte souvent sur la suite : écoute bien la fin."]},
+"5":{why:"30 questions de grammaire : une dizaine de règles couvrent l'essentiel.",how:["Lis d'abord les 4 options : même racine = question de nature du mot, réponds en 10 secondes.","Regarde le mot juste avant et juste après le blanc.","Objectif : 30 questions en 10 minutes."]},
+"6":{why:"16 questions qui mélangent grammaire et compréhension du texte.",how:["Lis la phrase avant ET après le blanc.","Pour les phrases à insérer, repère les liens logiques et les pronoms (It, This, However).","2 minutes maximum par texte."]},
+"7s":{why:"29 questions : on progresse surtout grâce à la méthode et à la vitesse.",how:["Lis la question d'abord, puis cherche le mot-clé dans le texte.","Les questions suivent généralement l'ordre du texte.","Question NOT : vérifie les options présentes ; celle que tu ne trouves pas est la réponse."]},
+"7m":{why:"25 questions difficiles : progrès plus lents, mais beaucoup de points à prendre.",how:["Lis d'abord le titre de chaque document : qui écrit, à qui, pourquoi.","Au moins une question par série demande de croiser deux documents.","Garde 55 minutes pour toute la partie 7."]}};
+const TIPS={p5_forme:"Mot avant le blanc = déterminant → nom ; devant un nom → adjectif ; autour d'un verbe → adverbe en -ly.",p5_temps:"Cherche l'indicateur : since/for → present perfect ; ago/last → prétérit ; next/tomorrow → futur.",p5_prep:"Apprends les combinaisons fixes : responsible for, by + date limite, on + jour, at + heure.",p5_conn:"Regarde ce qui suit le blanc : un nom → despite / because of ; sujet + verbe → although / because.",p5_pron:"Devant un nom → possessif (their, its) ; après un verbe ou une préposition → complément (him, them).",p5_verbe:"avoid, suggest, mind, enjoy + -ing ; decide, plan, agree, allow + to ; après une préposition → -ing.",p5_comp:"than → comparatif ; the ... of/in → superlatif ; as ... as → forme simple ; fewer + pluriel.",p5_passif:"Si le sujet subit l'action (ou s'il y a « by »), c'est un passif : be + participe passé.",p5_vocab:"Révise les associations du monde du travail : attend a meeting, a wide range of, complete a form.",p7_cross:"Note l'info clé de chaque document (date, prix, nombre) : la réponse en combine deux.",p7_not:"Vérifie chaque option dans le texte : celle que tu ne trouves pas est la réponse.",p7_vocab:"Remplace le mot par chaque option dans la phrase et garde celle qui conserve le sens.",p7_intent:"Relis les messages juste avant la phrase citée : le sens dépend du contexte.",p7_inf:"La réponse n'est pas écrite mot pour mot : cherche les indices et élimine.",p7_gen:"Le but du document est presque toujours dans les deux premières phrases.",p7_det:"Repère le mot-clé de la question (nom, date, chiffre) et scanne le texte pour le trouver.",gen:"Le sujet principal est donné au début : écoute attentivement les premières phrases.",det:"Lis les questions avant l'audio pour savoir quel détail guetter (heure, lieu, chiffre).",inf:"Métiers et lieux se devinent au vocabulaire (gate, boarding → aéroport ; check-in → hôtel).",next:"La réponse arrive à la fin : « I'll... », « Let's... », « Could you... ».",photo:"Décris la photo dans ta tête avant l'audio : qui, quoi, où.",p6_phrase:"La bonne phrase reprend une idée de la phrase d'avant ET annonce celle d'après."};
+const SC={L:[[0,5],[10,30],[25,110],[40,190],[50,245],[60,300],[70,355],[80,405],[90,455],[95,480],[100,495]],R:[[0,5],[10,25],[25,95],[40,170],[50,225],[60,280],[70,335],[80,390],[90,445],[95,470],[100,495]]};
+const scale=(t,raw)=>{const a=SC[t];for(let i=1;i<a.length;i++)if(raw<=a[i][0]){const[x0,y0]=a[i-1],[x1,y1]=a[i];return Math.round((y0+(y1-y0)*(raw-x0)/(x1-x0))/5)*5}return 495};
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const mmss=s=>`${Math.floor(s/60)}:${String(Math.max(0,s%60)).padStart(2,"0")}`;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function tl(tag){if(tag==="photo")return"Description de photo";if(tag.startsWith("p2_"))return P2TAG[tag.slice(3)];if(tag.startsWith("p5_"))return P5TAG[tag.slice(3)];if(tag.startsWith("p6_"))return P6TAG[tag.slice(3)];if(tag.startsWith("p7_"))return P7TAG[tag.slice(3)];return LTAG[tag]||tag}
+function tip(tag){return TIPS[tag]||(tag.startsWith("p2_")?"Écoute le premier mot de la question et élimine les réponses qui répètent ses mots ou des sons proches.":TIPS[tag.replace(/^p6_/,"p5_")]||"")}
+
+/* ----- stockage ----- */
+function load(){const d={tests:{},ex:{},set:{rate:.95,text:false},cur:null};try{const s=JSON.parse(localStorage.getItem(KEY)||"{}");return Object.assign(d,s,{set:Object.assign(d.set,s.set||{})})}catch(e){return d}}
+let ST=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(ST))}catch(e){}}
+
+/* ----- voix (synthèse vocale du système, hors ligne) ----- */
+const FEM=/samantha|karen|moira|tessa|victoria|zira|susan|serena|fiona|kate|hazel|libby|sonia|jenny|aria|allison|ava|female|catherine|martha|nicky|joanna|salli|kendra|emma|amy|olivia|natasha|linda|heather|heera|veena|female/i;
+const MAL=/daniel|alex|fred|tom|david|mark|oliver|rishi|aaron|arthur|george|guy|ryan|male|gordon|lee|james|ralph|bruce|matthew|brian|richard|william|thomas|evan|nathan/i;
+const TTS={en:[],fem:[],mal:[],
+  init(){if(!("speechSynthesis"in window))return;const f=()=>{let en=speechSynthesis.getVoices().filter(v=>/^en[-_]/i.test(v.lang));const loc=en.filter(v=>v.localService);if(loc.length)en=loc;this.en=en;this.fem=en.filter(v=>FEM.test(v.name)&&!/male/i.test(v.name.replace(/female/i,"")));this.mal=en.filter(v=>MAL.test(v.name)&&!FEM.test(v.name))};f();speechSynthesis.onvoiceschanged=f},
+  ok(){return "speechSynthesis"in window&&this.en.length>0},
+  stop(){try{speechSynthesis.cancel()}catch(e){}},
+  assign(){const pk=a=>a[Math.floor(Math.random()*a.length)];const fem=this.fem.length?this.fem:this.en,mal=this.mal.length?this.mal:this.en;
+    const W={v:pk(fem),p:this.fem.length?1:1.25},M={v:pk(mal),p:this.mal.length?1:.8};const m2=mal.filter(v=>v!==M.v);const M2={v:m2.length?pk(m2):M.v,p:m2.length?1:.95};
+    return {W,M,M2,N:Math.random()<.5?W:M}},
+  say(t,vp){return new Promise(res=>{const u=new SpeechSynthesisUtterance(t.replace(/\b(Mr|Ms|Mrs|Dr)\./g,"$1").replace(/A\.M\./g,"AM").replace(/P\.M\./g,"PM"));
+    if(vp&&vp.v){u.voice=vp.v;u.lang=vp.v.lang}else u.lang="en-US";u.rate=ST.set.rate;u.pitch=vp?vp.p:1;let done=false;
+    const to=setTimeout(()=>fin(),(t.split(/\s+/).length*.6/ST.set.rate+4)*1000);const fin=()=>{if(!done){done=true;clearTimeout(to);res()}};
+    u.onend=fin;u.onerror=fin;speechSynthesis.speak(u)})},
+  async group(lines,alive){const vs=this.assign();for(const[sp,t]of lines){for(const s of t.split(/(?<=[.!?])\s+(?=[A-Z0-9"])/)){if(!alive())return;await this.say(s,vs[sp]||vs.N)}if(!alive())return;await sleep(400)}}
+};
+const textMode=()=>ST.set.text||!TTS.ok();
+
+/* ----- construction des tests et exercices ----- */
+function number(gs,start){let k=start;gs.forEach(g=>g.qs.forEach(q=>q.n=k++))}
+function buildTest(n){const r=RNG(1000+n*7919),L=[],R=[];
+  for(let i=0;i<6;i++)L.push(genP1(r));for(let i=0;i<25;i++)L.push(genP2(r));for(let i=0;i<13;i++)L.push(genP3(r));for(let i=0;i<10;i++)L.push(genP4(r));
+  for(let i=0;i<30;i++)R.push(genP5(r));for(let i=0;i<4;i++)R.push(genP6(r));
+  let s=0;while(s<29){const g=genP7(r,false);if(s+g.qs.length>29)g.qs=g.qs.slice(0,29-s);s+=g.qs.length;R.push(g)}
+  for(let i=0;i<5;i++)R.push(genP7(r,true));
+  number(L,1);number(R,101);return{L,R}}
+function exTitle(p,i){return "Exercice "+(i+1)+(p==="5"?(i<9?" · "+P5TAG[P5ORD[i]]:" · mixte"):"")}
+function buildEx(p,i){const r=RNG(50000+PARTS.indexOf(p)*1000+i*37),d=EXD[p];let gs=[];
+  if(p==="5"){if(i<9){const tag=P5ORD[i],nT=P5B.filter(x=>x[0]===tag).length;for(let j=0;j<nT;j++)gs.push(genP5(r,tag))}while(gs.length<30)gs.push(genP5(r))}
+  else for(let j=0;j<d.k;j++)gs.push(d.g(r));
+  number(gs,1);return gs}
+function evaluate(gs,ans){const parts={},tags={};let rl=0,rr=0;
+  gs.forEach(g=>g.qs.forEach(q=>{const ok=ans[q.n]===q.a,k=g.p+"|"+q.tag;(parts[g.p]=parts[g.p]||[0,0])[1]++;(tags[k]=tags[k]||[0,0])[1]++;if(ok){parts[g.p][0]++;tags[k][0]++;isL(g.p)?rl++:rr++}}));
+  const L=scale("L",rl),R=scale("R",rr);return{parts,tags,rl,rr,L,R,tot:L+R}}
+
+/* ----- recommandations ----- */
+function pickEx(p,weak){const d=EXD[p],list=[];
+  if(p==="5")weak.forEach(w=>{const k=P5ORD.indexOf(w.tag.replace("p5_",""));if(k>=0&&!list.includes(k))list.push(k)});
+  for(let i=(p==="5"?9:0);i<d.n&&list.length<3;i++)if(!ST.ex[p+"-"+i]&&!list.includes(i))list.push(i);
+  if(list.length<3){const rest=[...Array(d.n).keys()].filter(i=>!list.includes(i)).sort((a,b)=>((ST.ex[p+"-"+a]||{}).best||0)-((ST.ex[p+"-"+b]||{}).best||0));list.push(...rest.slice(0,3-list.length))}
+  return list.slice(0,3)}
+function recs(res){const out=[];
+  PARTS.forEach(p=>{const v=res.parts[p];if(!v)return;const acc=v[0]/v[1],miss=REAL[p]*(1-acc);out.push({p,acc,miss,prio:miss*EASE[p]})});
+  out.sort((a,b)=>b.prio-a.prio);
+  return out.map(o=>{o.weak=Object.entries(res.tags).filter(([k])=>k.split("|")[0]===o.p).map(([k,v])=>({tag:k.split("|")[1],c:v[0],t:v[1],acc:v[0]/v[1]})).filter(x=>x.t>=2&&x.acc<.75).sort((a,b)=>a.acc-b.acc).slice(0,2);
+    o.ex=pickEx(o.p,o.weak);o.pts=Math.round(o.miss*.5)*5;return o})}
+const easeLabel=p=>EASE[p]>=.85?["Gain rapide","quick"]:EASE[p]>=.65?["Progrès en 2-3 semaines","mid"]:["Travail de fond","slow"];
+function recCard(o,k){const e=easeLabel(o.p);return `<div class="rec"><div class="rk">${k+1}</div><div class="rb">
+  <div class="rh"><h3>${PN[o.p]}</h3><span class="pill ${e[1]}">${e[0]}</span></div>
+  <p class="muted">Tu as eu ${Math.round(o.acc*100)} % de bonnes réponses. ${METH[o.p].why} En récupérant la moitié de tes erreurs : environ <b>+${o.pts} points</b>.</p>
+  ${o.weak.length?`<p><b>À travailler en premier :</b> ${o.weak.map(w=>`${tl(w.tag)} (${w.c}/${w.t})`).join(", ")}</p><ul>${o.weak.map(w=>tip(w.tag)).filter(Boolean).map(t=>`<li>${t}</li>`).join("")}</ul>`:`<ul>${METH[o.p].how.slice(0,2).map(t=>`<li>${t}</li>`).join("")}</ul>`}
+  <div class="exrow">${o.ex.map(i=>`<button class="btn sm" data-act="exGo" data-p="${o.p}" data-i="${i}">${exTitle(o.p,i)}${ST.ex[o.p+"-"+i]?` · ${ST.ex[o.p+"-"+i].best} %`:""}</button>`).join("")}</div></div></div>`}
+
+/* ----- navigation ----- */
+let RUN=null;
+const $=s=>document.querySelector(s);
+function stopAll(){if(RUN){RUN.tok++;clearInterval(RUN.iv);clearInterval(RUN.cdv)}TTS.stop();RUN=null}
+function show(h,tab){stopAll();$("#app").innerHTML=h;document.querySelectorAll(".nav a").forEach(a=>a.classList.toggle("on",a.dataset.act===tab));window.scrollTo(0,0)}
+function lastTest(){const d=Object.keys(ST.tests).map(Number).sort((a,b)=>a-b);return d.length?[d[d.length-1],ST.tests[d[d.length-1]]]:null}
+
+function chart(){const W=640,H=250,pl=46,pr=18,pt=18,pb=36,lo=200,hi=990;
+  const x=n=>pl+(n-1)*(W-pl-pr)/7,y=v=>pt+(hi-Math.max(lo,v))/(hi-lo)*(H-pt-pb);
+  const pts=[];for(let n=1;n<=8;n++)if(ST.tests[n])pts.push([n,ST.tests[n].tot]);
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Évolution du score">`;
+  [400,600,785,850].forEach(v=>{const g=v===850?"goal":v===785?"b2":"grid";s+=`<line x1="${pl}" x2="${W-pr}" y1="${y(v)}" y2="${y(v)}" class="${g}"/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end" class="ax">${v}</text>`});
+  s+=`<text x="${W-pr}" y="${y(850)-6}" text-anchor="end" class="gl">Objectif 850</text><text x="${W-pr}" y="${y(785)+15}" text-anchor="end" class="bl">Niveau B2 : 785</text>`;
+  for(let n=1;n<=8;n++)s+=`<text x="${x(n)}" y="${H-12}" text-anchor="middle" class="ax">T${n}</text>`;
+  if(pts.length>1)s+=`<path d="${pts.map((p,i)=>(i?"L":"M")+x(p[0])+" "+y(p[1])).join("")}" class="line"/>`;
+  pts.forEach(p=>{s+=`<circle cx="${x(p[0])}" cy="${y(p[1])}" r="6" class="dot"/><text x="${x(p[0])}" y="${y(p[1])-12}" text-anchor="middle" class="val">${p[1]}</text>`});
+  if(!pts.length)s+=`<text x="${W/2}" y="${H/2}" text-anchor="middle" class="ax">Ta courbe apparaîtra après le test 1</text>`;
+  return s+"</svg>"}
+
+function home(){
+  const lt=lastTest(),next=[1,2,3,4,5,6,7,8].find(n=>!ST.tests[n]),cur=ST.cur;
+  const tot=lt?lt[1].tot:null,pct=tot?Math.min(100,Math.round((tot-10)/(850-10)*100)):0;
+  let h=`<section class="hero"><div><p class="eyebrow">Ton score estimé${lt?" · test "+lt[0]:""}</p>
+  <div class="score">${tot??`<span class="muted">?</span>`}<small> / 990</small></div>
+  ${lt?`<p class="muted">Écoute ${lt[1].L} · Lecture ${lt[1].R} · encore ${Math.max(0,850-tot)} points pour 850</p>`:`<p class="muted">Passe le test 1 pour obtenir ton score de départ et tes recommandations.</p>`}
+  <div class="bar big"><i style="width:${pct}%"></i></div>
+  <div class="cta">${cur?`<button class="btn" data-act="startTest" data-n="${cur.n}" data-res="1">Reprendre le test ${cur.n}</button>`:""}
+  ${next?`<button class="btn ${cur?"ghost":""}" data-act="testIntro" data-n="${next}">Commencer le test ${next}</button>`:`<span class="pill quick">Les 8 tests sont faits</span>`}</div></div>
+  <div class="card">${chart()}</div></section>`;
+  if(lt){const rs=recs(lt[1]).slice(0,3);h+=`<section><h2>À travailler cette semaine</h2><p class="muted">Classé selon les points à gagner et la facilité de la partie, d'après ton test ${lt[0]}.</p>${rs.map(recCard).join("")}</section>`}
+  h+=`<section><h2>Les 8 tests blancs</h2><p class="muted">Un par semaine. 2 heures : 45 min d'écoute puis 75 min de lecture, 200 questions.</p><div class="tests">${[1,2,3,4,5,6,7,8].map(n=>{const t=ST.tests[n];return `<div class="tcard ${t?"done":""}"><b>Test ${n}</b><span class="muted">Semaine ${n}</span>${t?`<div class="tsc">${t.tot}</div><div class="exrow"><button class="btn sm" data-act="results" data-n="${n}">Résultats</button><button class="btn sm ghost" data-act="testIntro" data-n="${n}">Refaire</button></div>`:`<div class="tsc muted">–</div><button class="btn sm ${n===next?"":"ghost"}" data-act="testIntro" data-n="${n}">Commencer</button>`}</div>`}).join("")}</div></section>`;
+  show(h,"home")}
+
+function exList(){
+  show(`<section><h2>Exercices par partie</h2><p class="muted">Correction immédiate, transcription de l'audio et explication de chaque réponse. Ton meilleur score est affiché sur chaque exercice.</p>
+  ${PARTS.map(p=>{const d=EXD[p];return `<div class="card part"><div class="rh"><h3>${PN[p]}</h3><span class="pill ${isL(p)?"lis":"rea"}">${isL(p)?"Écoute":"Lecture"} · ≈ ${d.min} min chacun</span></div>
+  <p class="muted">${METH[p].how[0]}</p><div class="exgrid">${[...Array(d.n).keys()].map(i=>{const e=ST.ex[p+"-"+i];const c=e?(e.best>=80?"g":e.best>=60?"m":"b"):"";return `<button class="exb ${c}" data-act="exGo" data-p="${p}" data-i="${i}" title="${exTitle(p,i)}"><b>${i+1}</b><small>${p==="5"&&i<9?P5TAG[P5ORD[i]]:(e?e.best+" %":"à faire")}</small></button>`}).join("")}</div></div>`}).join("")}</section>`,"exList")}
+
+function meth(){show(`<section><h2>Méthodes par partie</h2>${PARTS.map(p=>`<div class="card"><h3>${PN[p]}</h3><p class="muted">${METH[p].why}</p><ul>${METH[p].how.map(t=>`<li>${t}</li>`).join("")}</ul></div>`).join("")}
+  <div class="card"><h3>Gestion du temps (lecture : 75 min)</h3><ul><li>Partie 5 : 10 minutes maximum.</li><li>Partie 6 : 8 minutes maximum.</li><li>Partie 7 : environ 55 minutes.</li><li>Ne laisse jamais de case vide : une mauvaise réponse ne fait pas perdre de points.</li></ul></div></section>`,"meth")}
+
+function settings(){const n=TTS.en.length;
+  show(`<section><h2>Réglages</h2><div class="card"><h3>Voix</h3><p class="muted">${n?`${n} voix anglaises trouvées sur cet appareil (${TTS.fem.length} féminines, ${TTS.mal.length} masculines). Elles fonctionnent sans connexion.`:"Aucune voix anglaise trouvée sur cet appareil : l'écoute s'affichera sous forme de texte. Sur Windows ou Mac, installe une voix anglaise dans les réglages de langue du système."}</p>
+  <label class="row">Vitesse de lecture <input type="range" min="0.7" max="1.2" step="0.05" value="${ST.set.rate}" data-in="rate"> <b id="rv">${ST.set.rate}</b></label>
+  <label class="row"><input type="checkbox" data-in="text" ${ST.set.text?"checked":""}> Afficher le texte de l'audio au lieu de l'écouter</label>
+  <button class="btn ghost" data-act="testVoice">Tester les voix</button></div>
+  <div class="card"><h3>Sauvegarde</h3><p class="muted">Tes résultats sont enregistrés dans ce navigateur, sur cet appareil. Exporte-les pour les garder ou les transférer.</p>
+  <div class="exrow"><button class="btn ghost" data-act="exp">Exporter mes résultats</button><label class="btn ghost">Importer<input type="file" accept=".json" data-in="imp" hidden></label><button class="btn ghost danger" data-act="reset">Tout effacer</button></div><p id="msg" class="muted"></p></div></section>`,"settings")}
+
+/* ----- rendu d'un groupe de questions ----- */
+const SPK={W:"Femme",M:"Homme",M2:"Homme 2",N:"Voix"};
+function gHTML(g,ans,mode,reveal){
+  const rq=q=>reveal===true||(mode==="P"&&ans[q.n]!==undefined);
+  const grp=reveal===true||(mode==="P"&&g.qs.every(q=>ans[q.n]!==undefined));
+  const tm=mode==="L"&&textMode();
+  let h="";
+  if(g.scene)h+=`<div class="scene">${g.scene}</div>`;
+  if(g.p==="2"&&(tm||grp))h+=`<p class="tr2">${esc(g.qs[0].tr)}</p>`;
+  if((g.p==="3"||g.p==="4")&&(tm||grp))h+=`<div class="trans"><div class="dt">Transcription</div>${g.audio.map(([s,t])=>`<p>${g.p==="3"?`<b>${SPK[s]} :</b> `:""}${esc(t)}</p>`).join("")}</div>`;
+  if(g.doc)h+=`<div class="doc">${g.doc.replace(/\[\[(\d)\]\]/g,(_,k)=>`<span class="blank">(${g.qs[k].n})</span>`)}</div>`;
+  if(g.docs)h+=`<div class="docs">${g.docs.map(d=>`<div class="doc"><div class="dt">${d.t}</div>${d.h}</div>`).join("")}</div>`;
+  h+=`<div class="qs">${g.qs.map(q=>{const rv=rq(q),hid=q.hide&&!rv&&!tm;
+    const qt=q.hide?"":esc(q.q).replace(/___/g,'<span class="gap"></span>');
+    return `<div class="q" id="q${q.n}"><div class="qt"><span class="num">${q.n}</span>${qt}</div><div class="opts">${q.o.map((o,i)=>{let c="opt";const sel=ans[q.n]===i;if(sel)c+=" sel";if(rv){if(i===q.a)c+=" ok";else if(sel)c+=" bad"}
+      return `<button class="${c}" data-act="${mode==="P"?"exAns":"ans"}" data-q="${q.n}" data-i="${i}" ${rv||mode==="V"?"disabled":""}><b>${LET[i]}</b>${hid?"":`<span>${esc(o)}</span>`}</button>`}).join("")}</div>
+      ${rv?`<p class="ex"><span class="pill tag">${tl(q.tag)}</span> ${ans[q.n]===q.a?"Bonne réponse.":ans[q.n]===undefined?`Pas de réponse. Réponse : ${LET[q.a]}.`:`Réponse : ${LET[q.a]}.`} ${q.ex?esc(q.ex):""}</p>`:""}</div>`}).join("")}</div>`;
+  return `<div class="grp g${g.p}">${h}</div>`}
+
+/* ----- test : écoute ----- */
+function testIntro(n){const done=ST.tests[n];
+  show(`<section class="card intro"><h2>Test ${n}</h2><p>200 questions, environ 2 heures, comme le vrai TOEIC :</p>
+  <ul><li><b>Écoute (≈ 45 min, 100 questions)</b> : l'audio passe une seule fois et la question suivante arrive automatiquement. Lis les questions des parties 3 et 4 pendant que l'audio démarre.</li>
+  <li><b>Lecture (75 min, 100 questions)</b> : chronomètre, tu peux naviguer librement entre les questions.</li></ul>
+  ${textMode()?`<p class="warn">Mode texte actif : l'audio sera affiché à l'écran au lieu d'être lu.</p>`:`<p class="muted">Mets un casque ou monte le son. Tu peux régler la vitesse des voix dans Réglages.</p>`}
+  ${done?`<p class="warn">Tu as déjà fait ce test (${done.tot}). Le refaire remplacera ce score.</p>`:""}
+  <div class="exrow"><button class="btn" data-act="startTest" data-n="${n}">Démarrer l'écoute</button><button class="btn ghost" data-act="home">Retour</button></div></section>`,"home")}
+function persist(){if(RUN&&RUN.kind==="test"){ST.cur={n:RUN.n,phase:RUN.phase,gi:RUN.gi,ri:RUN.ri,ans:RUN.ans,rLeft:RUN.rLeft};save()}}
+function startTest(n,resume){stopAll();const t=buildTest(n);
+  RUN={kind:"test",n,L:t.L,R:t.R,ans:{},phase:"L",gi:0,ri:0,rLeft:75*60,tok:0};
+  if(resume&&ST.cur&&ST.cur.n===n)Object.assign(RUN,{ans:ST.cur.ans||{},phase:ST.cur.phase,gi:ST.cur.gi,ri:ST.cur.ri,rLeft:ST.cur.rLeft});
+  $("#app").innerHTML=`<div class="runner"><div class="rtop"><b id="rt"></b><span id="rinfo" class="muted"></span><span class="sp"></span><span id="cd" class="cd"></span><button class="btn sm ghost" data-act="pause" id="pz">Pause</button></div><div class="bar"><i id="rbar"></i></div><div id="stage"></div></div>`;
+  if(RUN.phase==="L")listenLoop();else readingIntro()}
+function countdown(sec,R,tok){return new Promise(res=>{let s=sec;const el=$("#cd");const up=()=>{if(el)el.innerHTML=`Suite dans ${s} s <button class="btn sm ghost" data-act="skip">Suivant</button>`};up();
+  R.skip=()=>{clearInterval(R.cdv);res(true)};R.cdv=setInterval(()=>{if(RUN!==R||R.tok!==tok){clearInterval(R.cdv);res(false);return}s--;up();if(s<=0){clearInterval(R.cdv);res(true)}},1000)})}
+async function listenLoop(){const R=RUN,tok=++R.tok,alive=()=>RUN===R&&R.tok===tok;
+  while(R.gi<R.L.length){if(!alive())return;const g=R.L[R.gi],q0=g.qs[0].n,q1=g.qs[g.qs.length-1].n;
+    $("#rt").textContent="Écoute · "+PN[g.p];$("#rinfo").textContent=`Question${q1>q0?"s "+q0+" à "+q1:" "+q0} / 100`;$("#rbar").style.width=(q0-1)+"%";$("#cd").textContent=textMode()?"":"Écoute en cours…";
+    $("#stage").innerHTML=gHTML(g,R.ans,"L",false);persist();
+    if(!textMode()){await sleep(g.p==="3"||g.p==="4"?2500:600);if(!alive())return;await TTS.group(g.audio,alive)}
+    if(!alive())return;
+    const w=textMode()?(g.p==="1"||g.p==="2"?20:60):(g.p==="1"||g.p==="2"?5:8*g.qs.length);
+    if(!await countdown(w,R,tok))return;R.gi++}
+  R.phase="R";persist();readingIntro()}
+function readingIntro(){const R=RUN;$("#pz").style.display="none";$("#cd").textContent="";$("#rt").textContent="Fin de l'écoute";$("#rinfo").textContent="";
+  $("#stage").innerHTML=`<div class="card intro"><h2>Partie lecture</h2><p>100 questions en ${mmss(R.rLeft)} minutes. Rappel : partie 5 en 10 min, partie 6 en 8 min, partie 7 en 55 min.</p><button class="btn" data-act="readGo">Démarrer la lecture</button></div>`}
+function readGo(){const R=RUN;R.tok++;clearInterval(R.iv);R.iv=setInterval(()=>{if(RUN!==R)return clearInterval(R.iv);R.rLeft--;const c=$("#cd");if(c){c.textContent="Temps restant "+mmss(R.rLeft);c.classList.toggle("late",R.rLeft<600)}if(R.rLeft%5===0)persist();if(R.rLeft<=0)finishTest()},1000);drawR()}
+function drawR(){const R=RUN,g=R.R[R.ri],q0=g.qs[0].n,q1=g.qs[g.qs.length-1].n,answered=Object.keys(R.ans).filter(k=>k>100).length;
+  $("#rt").textContent="Lecture · "+PN[g.p];$("#rinfo").textContent=`Question${q1>q0?"s "+q0+" à "+q1:" "+q0} · ${answered}/100 répondues`;$("#rbar").style.width=answered+"%";
+  $("#stage").innerHTML=`${gHTML(g,R.ans,"R",false)}<div class="rnav"><button class="btn ghost" data-act="rnav" data-d="-1" ${R.ri?"":"disabled"}>Précédent</button><button class="btn ghost" data-act="finAsk">Terminer le test</button><button class="btn" data-act="rnav" data-d="1" ${R.ri<R.R.length-1?"":"disabled"}>Suivant</button></div><div id="fin"></div>
+  <details class="pal"><summary>Toutes les questions</summary><div class="palg">${R.R.map((gg,gi)=>gg.qs.map(q=>`<button class="pb ${R.ans[q.n]!==undefined?"a":""} ${gi===R.ri?"c":""}" data-act="rgo" data-g="${gi}">${q.n}</button>`).join("")).join("")}</div></details>`;
+  persist()}
+function finishTest(){const R=RUN;if(!R)return;const res=evaluate([...R.L,...R.R],R.ans);ST.tests[R.n]=Object.assign(res,{date:Date.now(),ans:R.ans});ST.cur=null;save();results(R.n)}
+
+/* ----- résultats et correction ----- */
+function results(n){const t=ST.tests[n];if(!t)return home();const prev=[...Array(n-1).keys()].map(i=>i+1).reverse().find(i=>ST.tests[i]),pv=prev?ST.tests[prev]:null;
+  const rs=recs(t),d=pv?t.tot-pv.tot:null;
+  show(`<section class="hero"><div><p class="eyebrow">Test ${n} · ${new Date(t.date).toLocaleDateString("fr-FR")}</p><div class="score">${t.tot}<small> / 990</small></div>
+  <p class="muted">Écoute <b>${t.L}</b> (${t.rl}/100) · Lecture <b>${t.R}</b> (${t.rr}/100)${d!==null?` · <b class="${d>=0?"up":"down"}">${d>=0?"+":""}${d}</b> depuis le test ${prev}`:""}</p>
+  <p class="muted small">Score estimé à partir d'une table de conversion approximative : le vrai TOEIC peut varier d'environ 25 points.</p>
+  <div class="exrow"><button class="btn" data-act="review" data-n="${n}">Voir la correction</button><button class="btn ghost" data-act="home">Accueil</button></div></div>
+  <div class="card"><h3>Résultats par partie</h3>${PARTS.map(p=>{const v=t.parts[p]||[0,1],a=Math.round(v[0]/v[1]*100),o=pv&&pv.parts[p]?Math.round(pv.parts[p][0]/pv.parts[p][1]*100):null;
+    return `<div class="pr"><span>${PN[p].replace("Partie ","P")}</span><div class="bar ${isL(p)?"lis":"rea"}"><i style="width:${a}%"></i></div><b>${v[0]}/${v[1]}</b>${o!==null?`<small class="${a>=o?"up":"down"}">${a>=o?"+":""}${a-o}</small>`:"<small></small>"}</div>`}).join("")}</div></section>
+  <section><h2>Par quoi commencer</h2><p class="muted">Les parties sont classées selon les points que tu peux gagner et la facilité à progresser. Commence par la n°1.</p>${rs.slice(0,3).map(recCard).join("")}
+  <div class="card"><h3>Ordre complet</h3><table class="tbl"><tr><th>Partie</th><th class="n">Réussite</th><th class="n">Points à prendre</th><th>Difficulté</th></tr>${rs.map(o=>`<tr><td>${PN[o.p]}</td><td class="n">${Math.round(o.acc*100)} %</td><td class="n">+${o.pts}</td><td>${easeLabel(o.p)[0]}</td></tr>`).join("")}</table></div></section>`,"home")}
+function review(n,filt){const t=ST.tests[n];const T=buildTest(n);const all=[...T.L,...T.R];filt=filt||{p:"all",err:true};
+  const gs=all.filter(g=>(filt.p==="all"||g.p===filt.p)&&(!filt.err||g.qs.some(q=>t.ans[q.n]!==q.a)));
+  show(`<section><div class="rh"><h2>Correction du test ${n}</h2><button class="btn ghost sm" data-act="results" data-n="${n}">Retour aux résultats</button></div>
+  <div class="filters"><select data-in="revp" data-n="${n}"><option value="all">Toutes les parties</option>${PARTS.map(p=>`<option value="${p}" ${filt.p===p?"selected":""}>${PN[p]}</option>`).join("")}</select>
+  <label class="row"><input type="checkbox" data-in="reve" data-n="${n}" ${filt.err?"checked":""}> Seulement mes erreurs</label></div>
+  ${gs.length?gs.map(g=>`<div class="card">${gHTML(g,t.ans,"V",true)}</div>`).join(""):`<p class="muted">Aucune erreur dans cette sélection.</p>`}</section>`,"home");RV={n,filt}}
+let RV=null;
+
+/* ----- exercices ----- */
+function exGo(p,i){stopAll();RUN={kind:"ex",p,i,gs:buildEx(p,i),ans:{},gi:0,t0:Date.now(),tok:0};
+  $("#app").innerHTML=`<div class="runner"><div class="rtop"><b>${PN[p]} · ${exTitle(p,i)}</b><span class="sp"></span><span id="cd" class="cd"></span><button class="btn sm ghost" data-act="exList">Quitter</button></div><div class="bar"><i id="rbar"></i></div>
+  <div class="card tipbox"><b>Méthode :</b> ${METH[p].how.join(" ")}</div><div id="stage"></div></div>`;
+  RUN.iv=setInterval(()=>{const c=$("#cd");if(c&&RUN)c.textContent=mmss(Math.round((Date.now()-RUN.t0)/1000))},1000);
+  drawEx(true)}
+function drawEx(play){const R=RUN,g=R.gs[R.gi],all=g.qs.every(q=>R.ans[q.n]!==undefined),last=R.gi===R.gs.length-1;
+  $("#rbar").style.width=(R.gi/R.gs.length*100)+"%";
+  $("#stage").innerHTML=`<p class="muted">${isL(R.p)?"Écoute":"Question"} ${R.gi+1} / ${R.gs.length}</p>${gHTML(g,R.ans,"P",false)}
+  <div class="rnav">${g.audio&&!textMode()?`<button class="btn ghost" data-act="exReplay">Réécouter</button>`:"<span></span>"}<button class="btn" data-act="exNext" ${all?"":"disabled"}>${last?"Voir mon score":"Suivant"}</button></div>`;
+  if(g.audio&&textMode())$("#stage").insertAdjacentHTML("afterbegin",`<div class="trans">${g.audio.map(([s,t])=>`<p>${esc(t)}</p>`).join("")}</div>`);
+  if(play&&g.audio&&!textMode())exReplay()}
+function exReplay(){const R=RUN;if(!R||!R.gs[R.gi].audio||textMode())return;TTS.stop();const tok=++R.tok;setTimeout(()=>TTS.group(R.gs[R.gi].audio,()=>RUN===R&&R.tok===tok),250)}
+function exDone(){const R=RUN,res=evaluate(R.gs,R.ans),c=Object.values(res.parts)[0],pct=Math.round(c[0]/c[1]*100),k=R.p+"-"+R.i,old=ST.ex[k];
+  ST.ex[k]={last:pct,best:Math.max(pct,old?old.best:0),date:Date.now(),n:(old?old.n:0)+1};save();
+  const min=Math.round((Date.now()-R.t0)/60000),p=R.p,i=R.i,gs=R.gs,ans=R.ans;
+  const tags=Object.entries(res.tags).map(([kk,v])=>({tag:kk.split("|")[1],c:v[0],t:v[1]})).sort((a,b)=>a.c/a.t-b.c/b.t);
+  const nx=i+1<EXD[p].n?i+1:null;
+  show(`<section class="hero"><div><p class="eyebrow">${PN[p]} · ${exTitle(p,i)}</p><div class="score">${pct}<small> %</small></div><p class="muted">${c[0]}/${c[1]} bonnes réponses en ${min} min${old?` · meilleur score avant : ${old.best} %`:""}</p>
+  <div class="exrow"><button class="btn" data-act="exGo" data-p="${p}" data-i="${i}">Refaire</button>${nx!==null?`<button class="btn ghost" data-act="exGo" data-p="${p}" data-i="${nx}">Exercice suivant</button>`:""}<button class="btn ghost" data-act="exList">Tous les exercices</button></div></div>
+  <div class="card"><h3>Par type de question</h3>${tags.map(t=>`<div class="pr"><span>${tl(t.tag)}</span><div class="bar ${isL(p)?"lis":"rea"}"><i style="width:${t.c/t.t*100}%"></i></div><b>${t.c}/${t.t}</b><small></small></div>`).join("")}
+  ${tags[0]&&tags[0].c<tags[0].t&&tip(tags[0].tag)?`<p class="tipbox"><b>Conseil :</b> ${tip(tags[0].tag)}</p>`:""}</div></section>
+  <section><h2>Tes erreurs</h2>${gs.filter(g=>g.qs.some(q=>ans[q.n]!==q.a)).map(g=>`<div class="card">${gHTML(g,ans,"V",true)}</div>`).join("")||`<p class="muted">Aucune erreur, bravo.</p>`}</section>`,"exList")}
+
+/* ----- actions ----- */
+const ACT={
+  home,exList,meth,settings,
+  testIntro:d=>testIntro(+d.n),
+  startTest:d=>startTest(+d.n,!!d.res),
+  results:d=>results(+d.n),review:d=>review(+d.n),
+  ans:(d,b)=>{if(!RUN)return;RUN.ans[+d.q]=+d.i;b.parentNode.querySelectorAll(".opt").forEach(x=>x.classList.toggle("sel",x===b));persist();
+    if(RUN.phase==="R"){const answered=Object.keys(RUN.ans).filter(k=>k>100).length;$("#rinfo").textContent=$("#rinfo").textContent.replace(/\d+\/100 répondues/,answered+"/100 répondues");$("#rbar").style.width=answered+"%";document.querySelectorAll(".pb").forEach(p=>{if(+p.textContent===+d.q)p.classList.add("a")})}},
+  skip:()=>{if(RUN&&RUN.skip)RUN.skip()},
+  pause:(d,b)=>{const R=RUN;if(!R||R.phase!=="L")return;if(R.paused){R.paused=false;b.textContent="Pause";listenLoop()}else{R.paused=true;R.tok++;clearInterval(R.cdv);TTS.stop();b.textContent="Reprendre";$("#cd").textContent="En pause : la question reprendra depuis le début"}},
+  readGo,
+  rnav:d=>{RUN.ri=Math.max(0,Math.min(RUN.R.length-1,RUN.ri+ +d.d));drawR();window.scrollTo(0,0)},
+  rgo:d=>{RUN.ri=+d.g;drawR();window.scrollTo(0,0)},
+  finAsk:()=>{const left=100-Object.keys(RUN.ans).filter(k=>k>100).length;$("#fin").innerHTML=`<div class="warn">${left?`Il reste ${left} question${left>1?"s":""} sans réponse. `:""}Terminer le test maintenant ? <button class="btn sm" data-act="finYes">Oui, terminer</button> <button class="btn sm ghost" data-act="finNo">Continuer</button></div>`},
+  finYes:()=>finishTest(),finNo:()=>{$("#fin").innerHTML=""},
+  exGo:d=>exGo(d.p,+d.i),
+  exAns:(d)=>{const R=RUN;if(!R||R.ans[+d.q]!==undefined)return;R.ans[+d.q]=+d.i;drawEx(false);const el=$("#q"+d.q);if(el&&el.scrollIntoView&&R.gs[R.gi].qs.length>1)el.scrollIntoView({block:"nearest"})},
+  exReplay,
+  exNext:()=>{const R=RUN;TTS.stop();R.tok++;if(R.gi<R.gs.length-1){R.gi++;drawEx(true);window.scrollTo(0,0)}else exDone()},
+  testVoice:async()=>{TTS.stop();const v=TTS.assign();await TTS.say("Hello, I'm calling about the meeting on Tuesday.",v.W);await TTS.say("No problem. Would Thursday work for you instead?",v.M)},
+  exp:()=>{try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(ST)],{type:"application/json"}));a.download="toeic-resultats.json";document.body.appendChild(a);a.click();a.remove()}catch(e){$("#msg").textContent="Export impossible dans ce navigateur."}},
+  reset:(d,b)=>{if(b.dataset.armed){localStorage.removeItem(KEY);ST=load();settings();$("#msg").textContent="Toutes les données ont été effacées."}else{b.dataset.armed=1;b.textContent="Confirmer : tout effacer ?";setTimeout(()=>{if(b.isConnected){delete b.dataset.armed;b.textContent="Tout effacer"}},4000)}}
+};
+document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f){e.preventDefault();f(b.dataset,b)}});
+document.addEventListener("input",e=>{const t=e.target;if(t.dataset.in==="rate"){ST.set.rate=+t.value;$("#rv").textContent=t.value;save()}});
+document.addEventListener("change",e=>{const t=e.target,k=t.dataset.in;if(!k)return;
+  if(k==="text"){ST.set.text=t.checked;save()}
+  if(k==="revp"||k==="reve"){const f=Object.assign({},RV.filt);if(k==="revp")f.p=t.value;else f.err=t.checked;review(+t.dataset.n,f)}
+  if(k==="imp"&&t.files[0]){const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);if(!d.tests)throw 0;localStorage.setItem(KEY,JSON.stringify(d));ST=load();settings();$("#msg").textContent="Résultats importés."}catch(er){$("#msg").textContent="Fichier non reconnu."}};fr.readAsText(t.files[0])}});
+TTS.init();home();
+
+</script>
+<script>if("serviceWorker"in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{})</script>
+</body>
+</html>
